@@ -1,0 +1,375 @@
+---
+title: "Covid Trends"
+author: "Jose Tamez"
+date: "4/8/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, warning = FALSE, message = FALSE,comment = "#>")
+library(stringr)
+
+logisticcdf <- function(days,ro,to) 
+{ 
+  cdf <- 1.0/(1.0+exp(ro*(days-to))); 
+  return(cdf);
+}
+
+logisticpdf <- function(days,ro,to) 
+{ 
+  pdf <- -ro*exp(ro*(days-to))/((1.0+exp(ro*(days-to)))^2); 
+  return(pdf);
+}
+
+```
+
+## Forcasting COVID-19 Deaths
+
+A simple model for the estimation of the maximum percentage of deaths due to COVID-19.
+
+NOTE: I'm not an epidiomiologist. 
+
+The prediction based on a simple logistic model and:
+
+70% of SARS-CoV-2 exposure  
+10% Infection efficacy ie. 10% of the exposure subjects turns into a Covid-19 case  
+1% of Mortality  
+
+For each country we will use the urban population  
+
+I'll estimate the death rates based on current trends fitted to the logistic function.  
+The last 14 days will be used for the peak estimations.
+Peak estimations will be done using:  
+
+1) The last reported 14 observations  
+2) 14 observations from the last week  
+3) 14 observations ending two weeks ago   
+4) 14 observations ending three weeks ago  
+5) 14 observations ending four weeks ago  
+
+
+
+```{r parameters}
+# The expetec %  of deaths in each country
+
+expectedtotalFatalities = 0.7*0.1*0.01
+
+# The number of observations used for the trends
+daysWindow <- 14
+currentdate <- "April 7:" 
+
+```
+
+
+### Loading the data
+
+The data is the training set from: Kaggle: COVID19 Global Forecasting (Week 3)
+
+https://www.kaggle.com/c/covid19-global-forecasting-week-3/data
+
+
+
+```{r}
+
+train <- read.csv("~/GitHub/COVIDTrends/Kaggle/train.csv", stringsAsFactors=FALSE)
+train$ProviceCountry <- paste(train$Country_Region,train$Province_State,sep=":")
+
+train[train$Country_Region=="Korea, South","Country_Region"] <- "South Korea"
+trainCountry <- train[train$Province_State == "",]
+
+covid19_datapopulation <- read.csv("~/GitHub/COVIDTrends/Kaggle/covid19_data - population.csv", stringsAsFactors=FALSE)
+rownames(covid19_datapopulation) <- paste(covid19_datapopulation$Country,":",sep="")
+
+
+
+
+totalPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Population_2020,",",""))
+totalUrbanPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Urban_pop_pct,"\\%",""))/100.0
+totalUrbanPoulation[is.na(totalUrbanPoulation)] <- 1.0;
+totalUrbanPoulation <- totalPoulation*totalUrbanPoulation
+
+
+covid19_datapopulation$ExpectedFatalities <- expectedtotalFatalities*(
+                                                  totalUrbanPoulation + 
+                                                    0.1*(totalPoulation-totalUrbanPoulation)
+                                              )
+
+
+trainCountry$PerFatalities <- trainCountry$Fatalities/covid19_datapopulation[trainCountry$Country_Region,"ExpectedFatalities"]
+
+trainCountry <- trainCountry[trainCountry$Fatalities > 0,]
+
+expfatalities <- covid19_datapopulation$ExpectedFatalities/1.0e6
+names(expfatalities) <- covid19_datapopulation$Country
+expfatalities <- expfatalities[order(-expfatalities)]
+plot.new()
+op <- par(no.readonly = TRUE)
+par(mar=c(8,4,4,4),pty="m")
+#barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,horiz = TRUE,main="Expected Fatalities",xlab="MIllions")
+barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,main="Expected Fatalities",ylab="Millions")
+par(op)
+
+```
+
+Ploting some trends
+
+```{r}
+Country_Region <- names(table(trainCountry$Country_Region))
+totaldeaths <- numeric()
+for (ctr in Country_Region)
+{
+   totaldeaths <- append(totaldeaths,max(trainCountry[trainCountry$Country_Region == ctr,"Fatalities"]))
+}
+names(totaldeaths) <- Country_Region
+totaldeaths <- totaldeaths[order(-totaldeaths)]
+
+plot(trainCountry[trainCountry$Country_Region == names(totaldeaths[1]),"Fatalities"],main="Fatalities",xlab="Days",ylab="Fatalities")
+for (ctr in names(totaldeaths[1:25]))
+{
+  linp <- trainCountry[trainCountry$Country_Region == ctr,"Fatalities"] 
+  lines(linp)
+  text(length(linp)-1,linp[length(linp)],ctr)
+}
+
+plot(trainCountry[trainCountry$Country_Region == names(totaldeaths[1]),"PerFatalities"],main="% Fatalities",xlab="Days",ylab=" % Fatalities")
+for (ctr in names(totaldeaths[1:25]))
+{
+  linp <- trainCountry[trainCountry$Country_Region == ctr,"PerFatalities"]
+  lines(linp)
+  text(length(linp)-1,linp[length(linp)],ctr)
+}
+
+
+totaldeaths  <- totaldeaths[totaldeaths > 100]
+
+```
+
+
+## Estimating the peaks
+
+```{r results = "asis", dpi=600, fig.height= 4.0, fig.width= 6.0}
+
+par(op)
+cn = 25
+par(mfrow=c(1,1),cex=0.65,mar=c(4,4,4,5))
+for (cn in c(1:length(totaldeaths)))
+{
+  endDay <- 0
+  countryNumber <- cn
+  mainName <- paste(currentdate,names(totaldeaths[countryNumber]))
+  
+  datsetone <- trainCountry[trainCountry$Country_Region == names(totaldeaths[countryNumber]),"PerFatalities"]
+  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  lastobs <- length(datsetone)
+  datsetchange <- 0.35*datsetchange + 
+                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  
+  datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+  numdays <- nrow(datasetone)
+
+  ndays <- max(c(numdays - endDay,7))
+  startday <- max(1,ndays - daysWindow)
+  daysrange <- c(startday:ndays)
+  
+  roestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
+                        data = datasetone[daysrange,],
+                        start=list(ro= -0.1,to=ndays),
+                        control=list(warnOnly=TRUE)))
+  
+  if (!inherits(roestimate, "try-error"))
+  {
+    smo <- summary(roestimate)
+    predictedTotalCases <- logisticcdf(c(1:120),smo$coefficients[1,1],smo$coefficients[2,1])
+#    predictedTotalCases[numdays+2]*covid19_datapopulation["Mexico","ExpectedFatalities"]
+
+    ymax <- max(c(predictedTotalCases,datasetone$fatalities))
+  
+    plot(predictedTotalCases,ylim=c(0,1.0),type="l",lty=2,xlab="days",ylab="Fraction of the Total Expected Fatalities",main=mainName)
+    lines(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],lwd=5)
+    lines(datasetone$days[c(1:ndays)],10*datasetone$newfatalities[c(1:ndays)],lty=3,lwd=4,col=2)
+    
+    daycode <- c("Last:","One Week Ago:","Two Weeks Ago:","Three Weeks Ago:")
+    dc <- 1
+    for (endDay in c(0,7,14,21,28))
+    {
+      ndays <- numdays - endDay
+      if (ndays > 7)
+      {
+        startday <- max(1,ndays - daysWindow)
+        daysrange <- c(startday:ndays)
+        pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
+                                data = datasetone[daysrange,],
+                                start=list(ro= smo$coefficients[1,1],to=smo$coefficients[2,1]),
+                                control=list(warnOnly=TRUE)))
+          
+        if (!inherits(pdfestimate, "try-error"))
+        {
+          nsmo <- summary(pdfestimate)
+          newcases <- logisticpdf(c(1:120),nsmo$coefficients[1,1],nsmo$coefficients[2,1])
+          lines(10*newcases,lty=6,col=(endDay+7)/7,lwd= 1 + 1*(dc == 1))
+          dmax <- which.max(newcases)
+          daystopeak <- nsmo$coefficients[2,1]-numdays;
+          if (dc == 1)
+          {
+            text(dmax+7,10*max(newcases)+0.05,paste("Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+          }
+        }
+      }
+      dc <- dc + 1
+    }
+  }
+  else
+  {
+    plot(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],
+         ylim=c(0,1.0),
+         type="l",
+         lty=2,
+         xlab="days",
+         ylab="% Fatalities",
+         main=mainName)
+  }
+  legend("topright",
+         legend = c("Estimated","Observed","New Fatalities","Estimated New","One Week Ago","Two Weeks Ago","Three Weeks Ago","Four Weeks Ago"),
+         col = c(1,1,2,1,2,3,4,5),
+         lty = c(2,1,3,6,6,6,6,6),
+         lwd = c(1,5,4,2,1,1,1,1))
+  z <- c(0:10)/100;
+  axis(4, at=10*z,labels=round(z,digits=2),
+  col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
+  mtext("Fraction of New Fatalities", cex=0.5,side=4, line=3, cex.lab=0.3, col="black",las=3)
+
+}
+
+```
+
+## Estimation by Province or State
+
+```{r}
+trainProvince <- train[train$Province_State != "",]
+#locations_population <- read.csv("~/GitHub/COVIDTrends/Kaggle/locations_population.csv", stringsAsFactors=FALSE)
+
+library(readxl)
+locations_population <- read_excel("Kaggle/locations_population.xlsx")
+
+totalStatePoulation <- as.numeric(locations_population$UrabPop)
+names(totalStatePoulation) <- locations_population$Province.State
+totalStatePoulation <- totalStatePoulation[locations_population$Province.State != ""]
+
+
+trainProvince$PerFatalities <- (trainProvince$Fatalities/totalStatePoulation[trainProvince$Province_State])/expectedtotalFatalities
+
+trainProvince <- trainProvince[trainProvince$Fatalities > 0,]
+
+
+Province_State <- names(table(trainProvince$Province_State))
+totaldeaths <- numeric()
+for (ctr in Province_State)
+{
+   totaldeaths <- append(totaldeaths,max(trainProvince[trainProvince$Province_State == ctr,"Fatalities"]))
+}
+names(totaldeaths) <- Province_State
+totaldeaths <- totaldeaths[order(-totaldeaths)]
+totaldeaths <- totaldeaths[totaldeaths>100]
+
+```
+
+
+## Estimating the State/Province Peaks
+
+```{r results = "asis", dpi=600, fig.height= 4.0, fig.width= 6.0}
+
+par(op)
+cn = 2
+par(mfrow=c(1,1),cex=0.65,mar=c(4,4,4,5))
+for (cn in c(1:length(totaldeaths)))
+{
+  endDay <- 0
+  stateNumber <- cn
+  mainName <- paste(currentdate,names(totaldeaths[stateNumber]))
+  
+  datsetone <- trainProvince[trainProvince$Province_State == names(totaldeaths[stateNumber]),"PerFatalities"]
+  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  lastobs <- length(datsetone)
+  datsetchange <- 0.35*datsetchange + 
+                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  
+  datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+  numdays <- min(nrow(datasetone),which.max(datasetone$newfatalities)+7)
+
+  ndays <- max(c(numdays - endDay,7))
+  startday <- max(1,ndays - daysWindow)
+  daysrange <- c(startday:ndays)
+  roestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
+                        data = datasetone[daysrange,],
+                        start=list(ro= -0.1,to=ndays),
+                        control=list(warnOnly=TRUE)))
+  
+  if (!inherits(roestimate, "try-error"))
+  {
+    smo <- summary(roestimate)
+    predictedTotalCases <- logisticcdf(c(1:120),smo$coefficients[1,1],smo$coefficients[2,1])
+    ymax <- max(c(predictedTotalCases,datasetone$fatalities))
+  
+    plot(predictedTotalCases,ylim=c(0,1.0),type="l",lty=2,xlab="days",ylab="Fraction of the Total Expected Fatalities",main=mainName)
+    lines(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],lwd=5)
+    lines(datasetone$days[c(1:ndays)],10*datasetone$newfatalities[c(1:ndays)],lty=3,lwd=4,col=2)
+    
+    daycode <- c("Last:","One Week Ago:","Two Weeks Ago:","Three Weeks Ago:")
+    dc <- 1
+    endDay <- 0;
+    for (endDay in c(0,7,14,21,28))
+    {
+      ndays <- numdays - endDay
+      if (ndays > 7)
+      {
+        startday <- max(1,ndays - daysWindow)
+        daysrange <- c(startday:ndays)
+        pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
+                                data = datasetone[daysrange,],
+                                start=list(ro= smo$coefficients[1,1],to=smo$coefficients[2,1]),
+                                control=list(warnOnly=TRUE)))
+          
+        if (!inherits(pdfestimate, "try-error"))
+        {
+          nsmo <- summary(pdfestimate)
+          newcases <- logisticpdf(c(1:120),nsmo$coefficients[1,1],nsmo$coefficients[2,1])
+          lines(10*newcases,lty=6,col=(endDay+7)/7,lwd= 1 + 1*(dc == 1))
+          dmax <- which.max(newcases)
+          daystopeak <- nsmo$coefficients[2,1]-numdays;
+          if (dc == 1)
+          {
+            text(dmax+7,10*max(newcases)+0.05,paste("Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+          }
+        }
+      }
+      dc <- dc + 1
+    }
+  }
+  else
+  {
+    plot(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],
+         ylim=c(0,1.0),
+         type="l",
+         lty=2,
+         xlab="days",
+         ylab="% Fatalities",
+         main=mainName)
+  }
+  legend("topright",
+         legend = c("Estimated","Observed","New Fatalities","Estimated New","One Week Ago","Two Weeks Ago","Three Weeks Ago","Four Weeks Ago"),
+         col = c(1,1,2,1,2,3,4,5),
+         lty = c(2,1,3,6,6,6,6,6),
+         lwd = c(1,5,4,2,1,1,1,1))
+  z <- c(0:10)/100;
+  axis(4, at=10*z,labels=round(z,digits=2),
+  col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
+  mtext("Fraction of New Fatalities", cex=0.5,side=4, line=3, cex.lab=0.3, col="black",las=3)
+
+}
+
+```
+
+

@@ -1,0 +1,59 @@
+---
+title: "Covid Trends"
+author: "Jose Tamez"
+date: "4/7/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, warning = FALSE, message = FALSE,comment = "#>")
+```
+
+## Modeling Epi Curves
+
+Loading the data
+
+```{r}
+train <- read.csv("~/GitHub/COVIDTrends/Kaggle/train.csv", stringsAsFactors=FALSE)
+
+
+train$ProviceCountry <- paste(train$Country_Region,train$Province_State,sep=":")
+
+covid19_datapopulation <- read.csv("~/GitHub/COVIDTrends/Kaggle/covid19_data - population.csv", stringsAsFactors=FALSE)
+rownames(covid19_datapopulation) <- paste(covid19_datapopulation$Country,":",sep="")
+
+covid19_datapopulation[ProviceCountry[1],]
+
+```
+
+Ploting some trends
+
+```{r}
+ProviceCountry <- names(table(train$ProviceCountry))
+totaldeaths <- numeric()
+for (ctr in ProviceCountry)
+{
+   totaldeaths <- append(totaldeaths,max(train[train$ProviceCountry == ctr,"Fatalities"]))
+}
+names(totaldeaths) <- ProviceCountry
+
+
+totaldeaths <- totaldeaths[order(-totaldeaths)]
+barplot(totaldeaths[1:10],las=2)
+
+plot(train[train$ProviceCountry == names(totaldeaths[1]),"Fatalities"],main="Fatalities",xlab="Days",ylab="Fatalities")
+for (ctr in names(totaldeaths[1:10]))
+{
+  lines(train[train$ProviceCountry == ctr,"Fatalities"])
+}
+
+```
+
+model = (ro exp^(-ro t))/(exp^(-ro t) + 1)^2
+
+
+
+

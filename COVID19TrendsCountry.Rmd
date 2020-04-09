@@ -1,0 +1,124 @@
+---
+title: "Covid Trends"
+author: "Jose Tamez"
+date: "4/7/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, warning = FALSE, message = FALSE,comment = "#>")
+library(stringr)
+growlogistic <- function(days,scale,ro,to) 
+{ 
+  change <- scale*exp(ro*(days-to))/((1.0+exp(ro*(days-to)))^2); 
+  return(change);
+}
+
+```
+
+## Modeling Epi Curves
+
+Loading the data
+
+```{r}
+train <- read.csv("~/GitHub/COVIDTrends/Kaggle/train.csv", stringsAsFactors=FALSE)
+train$ProviceCountry <- paste(train$Country_Region,train$Province_State,sep=":")
+
+trainCountry <- train[train$Province_State == "",]
+
+covid19_datapopulation <- read.csv("~/GitHub/COVIDTrends/Kaggle/covid19_data - population.csv", stringsAsFactors=FALSE)
+rownames(covid19_datapopulation) <- paste(covid19_datapopulation$Country,":",sep="")
+
+
+expectedtotalFatalities = 0.7*0.1*0.01
+totalPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Population_2020,",",""))
+totalUrbanPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Urban_pop_pct,"\\%",""))/100.0
+totalUrbanPoulation[is.na(totalUrbanPoulation)] <- 1.0;
+totalUrbanPoulation <- totalPoulation*totalUrbanPoulation
+
+
+covid19_datapopulation$ExpectedFatalities <- expectedtotalFatalities*(
+                                                  totalUrbanPoulation + 
+                                                    0.3*(totalPoulation-totalUrbanPoulation)
+                                              )
+
+
+trainCountry$PerFatalities <- trainCountry$Fatalities/covid19_datapopulation[trainCountry$Country_Region,"ExpectedFatalities"]
+
+trainCountry <- trainCountry[trainCountry$Fatalities > 0,]
+```
+
+Ploting some trends
+
+```{r}
+Country_Region <- names(table(trainCountry$Country_Region))
+totaldeaths <- numeric()
+for (ctr in Country_Region)
+{
+   totaldeaths <- append(totaldeaths,max(trainCountry[trainCountry$Country_Region == ctr,"Fatalities"]))
+}
+names(totaldeaths) <- Country_Region
+
+
+totaldeaths <- totaldeaths[order(-totaldeaths)]
+barplot(totaldeaths[1:10],las=2)
+
+plot(trainCountry[trainCountry$Country_Region == names(totaldeaths[1]),"Fatalities"],main="Fatalities",xlab="Days",ylab="Fatalities")
+for (ctr in names(totaldeaths[1:10]))
+{
+  lines(trainCountry[trainCountry$Country_Region == ctr,"Fatalities"])
+}
+
+plot(trainCountry[trainCountry$Country_Region == names(totaldeaths[1]),"PerFatalities"],main="Fatalities",xlab="Days",ylab="Fatalities")
+for (ctr in names(totaldeaths[1:10]))
+{
+  lines(trainCountry[trainCountry$Country_Region == ctr,"PerFatalities"])
+}
+
+
+
+```
+
+
+```{r}
+
+countryNumber <- 1
+endDay <- 21
+daysWindow <- 9
+
+datsetone <- trainCountry[trainCountry$Country_Region == names(totaldeaths[countryNumber]),"PerFatalities"]
+datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+lastobs <- length(datsetone)
+datsetchange <- 0.35*datsetchange + 
+                0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+
+datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+ndays <- max(nrow(datasetone) - endDay,7)
+startday <- max(1,ndays - daysWindow)
+
+datasetone <- rbind(datasetone,cbind(days=c(180:190),fatalities = rep(1,11),newfatalities = rep(0,11)))
+
+daysrange <- append(c(startday:ndays),c((nrow(datasetone)-11):nrow(datasetone)))
+
+
+roestimate <- nls(fatalities ~ SSlogis(days, Asym, xmid, scal),data = datasetone[daysrange,])
+
+smo <- summary(roestimate)
+ymax <- max(c(SSlogis(c(1:100),smo$coefficients[1,1],smo$coefficients[2,1],smo$coefficients[3,1]),datasetone$fatalities))
+plot(SSlogis(c(1:100),smo$coefficients[1,1],smo$coefficients[2,1],smo$coefficients[3,1]),ylim=c(0,ymax),type="l",lty=2,xlab="days",ylab="% Fatalities",main=names(totaldeaths[countryNumber]))
+lines(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],lwd=3)
+
+increasesti <- nls(newfatalities ~ growlogistic(days,scale, ro, to),data = datasetone[daysrange,],
+                   start = list(scale=smo$coefficients[1,1], ro = 1.0/smo$coefficients[3,1], to = smo$coefficients[2,1]),
+                   control=list(warnOnly=TRUE))
+sm <- summary(increasesti)
+lines(3*growlogistic(c(1:100),sm$coefficients[1,1],sm$coefficients[2,1],sm$coefficients[3,1]),lty=3)
+
+lines(datasetone$days[c(1:ndays)],3*datasetone$newfatalities[c(1:ndays)],lwd=4)
+
+
+```
+

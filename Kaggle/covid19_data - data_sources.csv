@@ -1,0 +1,23 @@
+Name,Source,Notes
+cost_of_living,https://www.numbeo.com/cost-of-living/rankings_by_country.jsp,"These indices are relative to New York City (NYC). Which means that for New York City, each index should be 100(%). If another city has, for example, rent index of 120, it means that on an average in that city rents are 20% more expensive than in New York City. If a city has rent index of 70, that means on an average in that city rents are 30% less expensive than in New York City."
+health,https://www.numbeo.com/health-care/rankings_by_country.jsp,"This section is based on surveys from visitors of this website. Questions for these surveys are similar to many similar scientific and government surveys.  Health Care Index is an estimation of the overall quality of the health care system, health care professionals, equipment, staff, doctors, cost, etc. "
+quality_of_life,https://www.numbeo.com/quality-of-life/rankings_by_country.jsp,"Quality of Life Index (higher is better) is an estimation of overall quality of life by using an empirical formula which takes into account purchasing power index (higher is better), pollution index (lower is better), house price to income ratio (lower is better), cost of living index (lower is better), safety index (higher is better), health care index (higher is better), traffic commute time index (lower is better) and climate index (higher is better). "
+property_prices,https://www.numbeo.com/property-investment/rankings_by_country.jsp,"Price to Income Ratio is the basic measure for apartment purchase affordability (lower is better). It is generally calculated as the ratio of median apartment prices to median familial disposable income, expressed as years of income (although variations are used also elsewhere). Our formula assumes and uses: 
+net disposable family income, as defined as 1.5 * the average net salary (50% is assumed percentage of women in the workforce)
+median apartment size is 90 square meters
+price per square meter (the formula uses) is the average price of square meter in the city center and outside of the city center"
+population,https://www.worldometers.info/world-population/population-by-country/,Data based on the latest United Nations Population Division estimates.
+sex,https://en.wikipedia.org/wiki/List_of_countries_by_sex_ratio,"Number of males in relation to each female. A ratio above 1, e.g. 1.1, means there are 1.1 males for every 1 female (more males than females). A ratio below 1, e.g. 0.8, means there are 0.8 males for every 1 female (more females than males). A ratio of 1 means there are equal numbers of females and males"
+age,https://en.wikipedia.org/wiki/List_of_countries_by_age_structure,Source is the World Bank. 
+gdp,https://en.wikipedia.org/wiki/List_of_countries_by_GDP_(nominal),Per the International Monetary Fund (2019 estimates)
+flu_pneumonia_death,https://www.worldlifeexpectancy.com/cause-of-death/influenza-pneumonia/by-country/,"Death Rate Per 100,000. Age Standardized. Data Source: WORLD HEALTH ORGANIZATION
+Age Adjusted Death Rate Estimates: 2017"
+airport_traffic,https://en.wikipedia.org/wiki/List_of_busiest_airports_by_passenger_traffic#cite_note-2,"""Preliminary world airport traffic rankings released"". ACI World. 13 March 2019."
+2009_flu_pandemic,https://en.wikipedia.org/wiki/2009_flu_pandemic_by_country,"Pandemic (H1N1) 2009–2010 by country. European Centre for Disease Prevention and Control: [1] Update:""ECDC Daily Update – Pandemic (H1N1) 2009 – 19 January 2010"" (PDF). 19 January 2010. Retrieved 19 January 2010."
+lat_long,https://developers.google.com/public-data/docs/canonical/countries_csv,Looks like the lat long coordinates of the center of the country
+hospital_beds,https://en.wikipedia.org/wiki/List_of_countries_by_hospital_beds#cite_note-nytimes_ventilators-21,Hospital beds by country
+airport_traffic_world,https://data.worldbank.org/indicator/is.air.psgr?name_desc=false,"World Development Indicators"
+covid19_ts,https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series,"Last accessed March 28, 2020, 10:26 PM"
+covid19_tests,https://ourworldindata.org/coronavirus#all-charts-preview,Our World in Data: Coronavirus
+school_closures,https://en.unesco.org/covid19/educationresponse,UNESCO
+covid19_strains,https://nextstrain.org/ncov,Genomic epidemiology of novel coronavirus

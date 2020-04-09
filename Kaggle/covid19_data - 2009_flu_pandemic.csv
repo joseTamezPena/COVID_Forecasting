@@ -1,0 +1,200 @@
+Country,Geographic_spread,Intensity,Impact_on_healthcare_services,Cases_underestimate,Cases_confirmed_clean,Deaths_confirmed_clean
+United States,W,**,mod,1,"113,690","3,433"
+Brazil,R,*,mod,1,"58,178","2,135"
+India,W,*,low,0,"33,783","2,024"
+Mexico,W,**,mod,0,"70,715","1,316"
+China,,,,0,"120,940",800
+Turkey,R,**,mod,0,"12,316",656
+Argentina,W,,low,1,"11,458",626
+Russia,W,**,,0,"25,339",604
+United Kingdom,R,*,,1,"28,456",474
+Canada,W,**,,1,"25,828",429
+France,R,*,low,0,"1,980,000",344
+Spain,W,*,,1,"1,538",300
+Egypt,,,,0,"15,812",278
+Germany,N,,low,1,"222,360",258
+South Korea,W,*,low,0,"107,939",250
+Thailand,R,*,low,0,"31,902",249
+Italy,W,**,,0,"3,064,933",244
+Colombia,W,*,mod,0,"4,310",272
+Peru,W,*,low,0,"9,165",223
+Ukraine,R,**,mod,0,494,213
+Ecuador,W,*,low,0,"2,251",200
+Japan,W,,,0,"11,636",198
+Australia,W,,,0,"37,484",187
+Poland,W,**,mod,1,"2,024",181
+Chile,W,,low2,0,"12,258",156
+Syria,,,,1,452,152
+Greece,N,*,,1,"17,977",149
+Iran,,,,0,"3,672",147
+Venezuela,W,*,mod,0,"2,187",135
+Hungary,L,,low,1,283,134
+Saudi Arabia,,,,0,"14,500",128
+Portugal,R,*,low,1,"166,922",122
+Romania,W,*,mod,0,"7,006",122
+Czech Republic,L,,,0,"2,445",102
+Israel,W,*,low,0,"4,330",94
+South Africa,,,,0,"12,640",93
+Malaysia,,,,0,"12,210",92
+Belarus,W,**,mod,0,102,88
+Serbia,R,**,low,0,695,83
+Hong Kong,,,,0,"33,109",80
+Cuba,W,**,mod,0,973,69
+Costa Rica,W,*,low,1,"1,867",67
+Morocco,,,,0,"2,890",64
+Netherlands,W,*,low,1,"1,473",62
+Bolivia,W,*,low,0,"2,310",59
+Vietnam,,,,0,"11,186",58
+Algeria,,,,0,916,57
+Finland,W,**,,0,"6,122",56
+Slovakia,S,,low,0,955,56
+Paraguay,L,**,,0,855,54
+New Zealand,L,*,low,1,"3,199",50
+Taiwan,,,,1,"5,474",48
+Sri Lanka,W,*,low,0,642,48
+Moldova,,,,0,"2,524",46
+Palestinian Territories,,,,0,"1,676",43
+Iraq,,,,0,"2,880",42
+Austria,W,,low,1,964,40
+Bulgaria,W,***,,0,766,40
+Latvia,S,,low,0,"1,253",34
+Oman,,,,0,"6,349",33
+Georgia,L,*,low,0,"1,300",33
+El Salvador,R,*,low,0,834,33
+Denmark,W,*,,1,651,33
+Uruguay,W,*,low,1,550,33
+Philippines,W,,,0,"5,212",32
+Yemen,,,,0,"5,038",31
+Kuwait,,,,0,"8,669",30
+Mongolia,,,,0,"1,259",30
+Norway,W,*,low,1,"12,654",29
+Sweden,W,***,mod,1,"10,985",29
+Ireland,W,***,mod,1,"3,189",26
+Macedonia,N,,,1,"2,600",26
+Croatia,W,,low,1,"50,255",26
+Pakistan,,,,0,253,25
+Tunisia,,,,0,"1,200",24
+Guatemala,N,*,low,0,"1,170",24
+Dominican Republic,R,**,mod,0,491,23
+Lithuania,S,,low,0,68,23
+Singapore,,,,1,"1,217",21
+Estonia,L,*,mod,1,738,21
+Belgium,W,*,low,0,"76,973",19
+Jordan,,,,0,"3,033",19
+Slovenia,L,*,,1,990,19
+Switzerland,W,*,low,0,"11,221",18
+Honduras,W,*,low,0,560,18
+Afghanistan,,,,0,853,17
+Kosovo,,,,0,98,14
+Bosnia and Herzegovina,L,,,0,714,13
+Panama,W,*,low,0,813,12
+Albania,S,*,mod,0,426,12
+Nicaragua,W,*,low,0,"2,172",11
+Indonesia,R,*,mod,0,"1,098",10
+Qatar,,,,0,550,10
+Cyprus,N,,,1,297,10
+North Korea,,,,0,28,10
+Bahrain,,,,0,"1,325",8
+Mauritius,,,,1,69,8
+Bangladesh,R,*,low,0,"1,015",7
+Jamaica,W,*,low,0,191,7
+Montenegro,N,,,0,119,7
+Cambodia,R,*,,0,531,6
+United Arab Emirates,,,,0,125,6
+Lebanon,,,,0,"1,838",5
+Malta,R,**,,1,718,5
+Trinidad and Tobago,W,*,low,0,211,5
+Sudan,,,,0,145,5
+Bahamas,W,*,mod,0,29,4
+Madagascar,,,,0,877,3
+Ghana,,,,0,676,3
+Luxembourg,W,**,low,0,333,3
+Nepal,R,*,low,0,172,3
+Barbados,W,*,low,0,154,3
+Armenia,,,,0,119,3
+Iceland,W,***,,0,676,2
+Macau (PRC),,,,0,"2,625",2
+Brunei,W,*,mod,0,971,2
+Samoa,,,,0,138,2
+Suriname,N,*,low,0,110,2
+São Tomé and Príncipe,,,,0,66,2
+Mozambique,,,,0,57,2
+Nigeria,,,,0,11,2
+St. Kitts and Nevis,N,*,low,0,6,2
+Tanzania,,,,0,770,1
+Libya,,,,0,764,1
+Laos,,,,0,242,1
+Cayman Islands (UK),,,,0,121,1
+Marshall Islands,,,,0,115,1
+Cook Islands (NZ),,,,0,106,1
+Namibia,,,,0,75,1
+St. Lucia,W,*,mod,0,55,1
+Maldives,L,,low,0,35,1
+Bermuda (UK),,,,0,25,1
+Tonga,,,,0,20,1
+Falkland Islands (UK),,,,0,7,1
+Solomon Islands,,,,0,4,1
+Other,,,,0,"7,052",0
+Zimbabwe,,,,0,"1,318",0
+Zambia,,,,0,726,0
+Jersey (UK),,,,0,702,0
+Rwanda,,,,0,482,0
+Kenya,,,,0,417,0
+Senegal,,,,0,325,0
+Uganda,,,,0,263,0
+Fiji,N,*,low,0,234,0
+Democratic Republic of the Congo,,,,0,222,0
+Myanmar,L,,low,0,137,0
+Cape Verde,,,,0,118,0
+Akrotiri and Dhekelia (UK),,,,0,92,0
+Bhutan,N,,,0,91,0
+Haiti,L,,low,0,91,0
+Micronesia,,,,0,82,0
+Antigua and Barbuda,R,*,low,0,75,0
+Isle of Man (UK),,,,0,75,0
+Lesotho,,,,0,65,0
+Gibraltar (UK),,,,0,62,0
+Kyrgyzstan,N,,low,0,61,0
+Belize,W,,mod,0,49,0
+Niger,,,,0,49,0
+Palau,,,,0,47,0
+Faroe Islands,,,,0,44,0
+Turks and Caicos Islands (UK),,,,0,44,0
+Angola,,,,0,37,0
+Dominica,N,*,low,0,36,0
+Monaco,,,,0,36,0
+Seychelles,,,,0,33,0
+Botswana,,,,0,31,0
+Mali,,,,0,29,0
+Guyana,,,,0,27,0
+British Virgin Islands (UK),,,,0,25,0
+Tuvalu,,,,0,23,0
+Montserrat,,,,0,21,0
+Republic of the Congo,,,,0,21,0
+Grenada,W,*,mod,0,20,0
+Ethiopia,,,,0,19,0
+Guernsey (UK),,,,0,17,0
+Kazakhstan,R,**,mod,0,17,0
+St. Vincent and the Grenadines,L,,,0,17,0
+Tajikistan,,,,0,16,0
+Mauritania,,,,0,15,0
+Anguilla (UK),,,,0,14,0
+Azerbaijan,L,*,low,0,14,0
+Papua New Guinea,,,,0,12,0
+Côte d'Ivoire,,,,0,9,0
+Djibouti,,,,0,9,0
+Nauru,,,,0,8,0
+Burundi,,,,0,7,0
+Timor-Leste,L,,low,0,7,0
+Liechtenstein,,,,0,5,0
+San Marino,,,,0,5,0
+Swaziland,,,,0,5,0
+Cameroon,,,,0,4,0
+Gabon,,,,0,4,0
+Kiribati,,,,0,4,0
+Guinea,,,,0,3,0
+Vanuatu,,,,0,3,0
+Somalia,,,,0,2,0
+Andorra,,,,0,1,0
+Chad,,,,0,1,0
+Greenland,,,,0,1,0
