@@ -371,6 +371,7 @@ summary {
 <div id="TOC">
 <ul>
 <li><a href="#forcasting-covid-19-deaths">Forcasting COVID-19 Deaths</a><ul>
+<li><a href="#source-code">Source code:</a></li>
 <li><a href="#loading-the-data">Loading the data</a></li>
 </ul></li>
 <li><a href="#trends-modeling-functions">Trends Modeling Functions</a></li>
@@ -404,6 +405,9 @@ The last 14 days will be used for the peak estimations. Peak estimations will be
 </ol>
 <p>We are also providing optimistic models. We assume that the # of fatalities is one third the expected.</p>
 <p>For Mexico we set the optimistic factor to 5. For every other country is set to 3.</p>
+<div id="source-code" class="section level3">
+<h3>Source code:</h3>
+<p><a href="https://github.com/joseTamezPena/COVID_Forecasting" class="uri">https://github.com/joseTamezPena/COVID_Forecasting</a></p>
 <pre class="r"><code># The expetec %  of deaths in each country
 
 expectedtotalFatalities = 0.7*0.1*0.01
@@ -412,6 +416,7 @@ mexicoGain &lt;- 5
 # The number of observations used for the trends
 daysWindow &lt;- 14
 currentdate &lt;- &quot;April 8:&quot; </code></pre>
+</div>
 <div id="loading-the-data" class="section level3">
 <h3>Loading the data</h3>
 <p>The data is the training set from: Kaggle: COVID19 Global Forecasting (Week 4)</p>

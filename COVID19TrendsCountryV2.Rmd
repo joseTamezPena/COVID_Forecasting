@@ -47,6 +47,10 @@ We are also providing optimistic models. We assume that the # of fatalities is o
 
 For Mexico we set the optimistic factor to 5. For every other country is set to 3.
 
+### Source code:  
+
+https://github.com/joseTamezPena/COVID_Forecasting
+
 
 ```{r parameters}
 # The expetec %  of deaths in each country
@@ -63,9 +67,10 @@ currentdate <- "April 8:"
 
 ### Loading the data
 
-The data is the training set from: Kaggle: COVID19 Global Forecasting (Week 4)
+The data is the training set from: Kaggle: COVID19 Global Forecasting (Week 4)  
 
 https://www.kaggle.com/c/covid19-global-forecasting-week-4/data
+
 
 
 
