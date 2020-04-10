@@ -27,7 +27,7 @@ logisitcfit <- function(data,ro,to)
   accAdjust <- 1.0;
   error <- FALSE;
   
-  while ((abs(adjusto - adjust) > 0.005) && (accAdjust < 1.25) && (accAdjust > 0.75))
+  while ((abs(adjusto - adjust) > 0.005) && (accAdjust < 3) && (accAdjust > (1.0/3.0)))
   {
     adjusto <- 1.0;
     loops <- loops + 1;
@@ -39,27 +39,11 @@ logisitcfit <- function(data,ro,to)
     ));
     if (!inherits(cdfestimate, "try-error"))
     {
-      smo <- summary(cdfestimate)
-      fro = smo$coefficients[1,1];
-      fto = smo$coefficients[2,1];
-      if (fto < 0.5*to)
+      smo <- try(summary(cdfestimate))
+      if (!inherits(smo, "try-error"))
       {
-        fto <- to;
-      }
-      if (fto > 10*to)
-      {
-        fto <- to;
-      }
-      #     cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
-      pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
-                             data = data,
-                             start=list(ro = fro ,to = fto),
-                             control=list(warnOnly=TRUE)))
-      if (!inherits(pdfestimate, "try-error"))
-      {
-        psmo <- summary(pdfestimate)
-        fro = psmo$coefficients[1,1];
-        fto = psmo$coefficients[2,1];
+        fro = smo$coefficients[1,1];
+        fto = smo$coefficients[2,1];
         if (fto < 0.5*to)
         {
           fto <- to;
@@ -68,20 +52,46 @@ logisitcfit <- function(data,ro,to)
         {
           fto <- to;
         }
-        nleft <- 1.0-logisticcdf(data$days[lastObs], fro, fto);
-        adjust <- (0.25 + pLeft)/(0.25 + nleft);
-        if (adjust > 1.2)
+        #     cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+        pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
+                               data = data,
+                               start=list(ro = fro ,to = fto),
+                               control=list(warnOnly=TRUE)))
+        if (!inherits(pdfestimate, "try-error"))
         {
-          adjust <- 1.2;
+          psmo <- try(summary(pdfestimate))
+          if (!inherits(psmo, "try-error"))
+          {
+            fro = psmo$coefficients[1,1];
+            fto = psmo$coefficients[2,1];
+            if (fto < 0.5*to)
+            {
+              fto <- to;
+            }
+            if (fto > 10*to)
+            {
+              fto <- to;
+            }
+            nleft <- 1.0-logisticcdf(data$days[lastObs], fro, fto);
+            adjust <- (0.25 + pLeft)/(0.25 + nleft);
+            if (adjust > 1.2)
+            {
+              adjust <- 1.2;
+            }
+            if (adjust < 0.8)
+            {
+              adjust <- 0.8;
+            }
+            accAdjust <- accAdjust*adjust;
+            data$fatalities <- adjust*data$fatalities;
+            data$newfatalities <- adjust*data$newfatalities;
+            #      cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+          }
         }
-        if (adjust < 0.8)
-        {
-          adjust <- 0.8;
-        }
-        accAdjust <- accAdjust*adjust;
-        data$fatalities <- adjust*data$fatalities;
-        data$newfatalities <- adjust*data$newfatalities;
-        #      cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+      }
+      else
+      {
+        error <- TRUE;
       }
     }
     else

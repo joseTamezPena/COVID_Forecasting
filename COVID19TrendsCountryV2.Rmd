@@ -37,15 +37,35 @@ I'll estimate the death rates based on current trends fitted to the logistic fun
 The last 14 days will be used for the peak estimations.
 Peak estimations will be done using:  
 
+If the data has not reached the peak the plots will show estimations based on:  
+
 1) The last reported 14 observations  
 2) 14 observations from the last week  
 3) 14 observations ending two weeks ago   
 4) 14 observations ending three weeks ago  
 5) 14 observations ending four weeks ago  
 
+
+If the data reached the peak the plots will show:  
+
+1) all the points after one week before the peak   
+2) 14 observations before one week prior the peak   
+3) 14 observations ending two weeks prior the peak    
+4) 14 observations ending three week prior the peak  
+5) 14 observations ending four week prior the peak    
+
+
+
 We are also providing optimistic models. We assume that the # of fatalities is one third the expected.
 
 For Mexico we set the optimistic factor to 5. For every other country is set to 3.
+
+
+Notes:  
+
+1) If the current observations does not mach the estimated CDF, do not trust the predictions.  
+2) If predicted CDF does not reach 1.0, then there is the potential for more infection in the future or COVID-19 is not as deadly as I estimated  
+
 
 ### Source code:  
 
@@ -60,7 +80,7 @@ optGain <- 3
 mexicoGain <- 5
 # The number of observations used for the trends
 daysWindow <- 14
-currentdate <- "April 8:" 
+currentdate <- "April 9:" 
 
 ```
 
@@ -80,6 +100,8 @@ train <- read.csv("./Kaggle/train.csv", stringsAsFactors=FALSE)
 train$ProviceCountry <- paste(train$Country_Region,train$Province_State,sep=":")
 
 train[train$Country_Region=="Korea, South","Country_Region"] <- "South Korea"
+train[train$Country_Region=="Czechia","Country_Region"] <- "Czech Republic (Czechia)"
+
 trainCountry <- train[train$Province_State == "",]
 
 covid19_datapopulation <- read.csv("./Kaggle/covid19_data - population.csv", stringsAsFactors=FALSE)
@@ -156,7 +178,7 @@ source('./logfunctions.r')
 
 par(op)
 cn = 1
-par(mfrow=c(2,2),cex=0.45,mar=c(4,4,4,5))
+par(mfrow=c(1,1),cex=0.75,mar=c(4,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
   endDay <- 0
@@ -171,12 +193,12 @@ for (cn in c(1:length(totaldeaths)))
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
 
-
-  numdays <- nrow(datasetone)
+  lastobs <- nrow(datasetone);
+  numdays <- min(nrow(datasetone),which.max(datasetone$newfatalities)+7)
 
   ndays <- max(c(numdays - endDay,7))
   startday <- max(1,ndays - daysWindow)
-  daysrange <- c(startday:ndays)
+  daysrange <- c(startday:lastobs)
   
   cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays)  
 
@@ -200,25 +222,43 @@ for (cn in c(1:length(totaldeaths)))
   if (!inherits(cdffit, "try-error"))
   {
     predictedTotalCases <- logisticcdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+    ymax <- max(1,max(predictedTotalCases))
 
-    plot(predictedTotalCases,ylim=c(0,1.0),type="l",lty=2,xlab="Days from first fatality",ylab="Fraction of the Total Expected Fatalities",main=mainName)
-    lines(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],lwd=5)
-    lines(datasetone$days[c(1:ndays)],10*datasetone$newfatalities[c(1:ndays)],lty=3,lwd=4,col=2)
+    plot(predictedTotalCases,ylim=c(0,ymax),type="l",lty=2,xlab="Days from first fatality",ylab="Fraction of the Total Expected Fatalities",main=mainName)
+    lines(datasetone$days[c(1:lastobs)],datasetone$fatalities[c(1:lastobs)],lwd=5)
+    lines(datasetone$days[c(1:lastobs)],10*datasetone$newfatalities[c(1:lastobs)],lty=3,lwd=4,col=2)
 
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust
     lines(10*predictedTotalNewCases,lty=4,col="red")
     dmax <- which.max(predictedTotalNewCases)
-    daystopeak <- cdffit$to-numdays;
-    text(dmax+7,10*max(predictedTotalNewCases)+0.05,paste("Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+    daystopeak <- cdffit$to-lastobs;
+    text(dmax + 10,0.95,
+         paste("Days to peak:", sprintf("%3.0f",daystopeak)),
+         cex=0.8)
+    abline(v=dmax,col="red",lty=2)
     
+  if (numdays ==  lastobs)
+  {
+    datasetOptimist <- datasetone;
+    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
+    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays)  
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust
     lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
     dmax <- which.max(predictedTotalNewCases)
-    daystopeak <- cdffit2$to-numdays;
-    text(dmax+7,10*max(predictedTotalNewCases)/maxgain+0.05,paste("Opt: Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+    daystopeak <- cdffit2$to-lastobs;
+    text(dmax - 12,
+         0.95,
+         paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
+         cex=0.8,
+         col="pink")
+    abline(v=dmax,col="pink")
+  }
 
     for (endDay in c(7,14,21,28))
     {
+      numdays <- which.max(datasetone$newfatalities);
       ndays <- numdays - endDay
       if (ndays > 7)
       {
@@ -244,10 +284,10 @@ for (cn in c(1:length(totaldeaths)))
          main=mainName)
   }
   legend("topright",
-         legend = c("Estimated","Observed","New Fatalities","Estimated New","Optimistic New","One Week Ago","Two Weeks Ago","Three Weeks Ago","Four Weeks Ago"),
+         legend = c("Estimated","Observed","New Fatalities","Estimated New","Optimistic New","One Week","Two Weeks","Three Weeks","Four Weeks"),
          col = c(1,1,2,2,"pink",3,4,5,6),
          lty = c(2,1,3,4,5,6,6,6,6),
-         lwd = c(1,5,4,1,2,1,1,1,1),cex=0.5)
+         lwd = c(1,5,4,1,2,1,1,1,1),cex=0.75)
   z <- c(0:10)/100;
   axis(4, at=10*z,labels=round(z,digits=2),
   col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
@@ -295,7 +335,7 @@ totaldeaths <- totaldeaths[totaldeaths>100]
 
 par(op)
 cn = 2
-par(mfrow=c(2,2),cex=0.45,mar=c(4,4,4,5))
+par(mfrow=c(1,1),cex=0.75,mar=c(4,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
   endDay <- 0
@@ -309,42 +349,55 @@ for (cn in c(1:length(totaldeaths)))
                   0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+  lastobs <- length(datsetone)
   numdays <- min(nrow(datasetone),which.max(datasetone$newfatalities)+7)
 
   ndays <- max(c(numdays - endDay,7))
   startday <- max(1,ndays - daysWindow)
-  daysrange <- c(startday:ndays)
+  daysrange <- c(startday:lastobs)
+  
   cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays)  
-
-  datasetOptimist <- datasetone;
-  maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
-  datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
-  datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-  cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays)  
 
   if (!inherits(cdffit, "try-error"))
   {
     predictedTotalCases <- logisticcdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+    ymax <- max(1,max(predictedTotalCases))
 
-    plot(predictedTotalCases,ylim=c(0,1.0),type="l",lty=2,xlab="Days from first fatality",ylab="Fraction of the Total Expected Fatalities",main=mainName)
-    lines(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],lwd=5)
-    lines(datasetone$days[c(1:ndays)],10*datasetone$newfatalities[c(1:ndays)],lty=3,lwd=4,col=2)
+    plot(predictedTotalCases,ylim=c(0,ymax),type="l",lty=2,xlab="Days from first fatality",ylab="Fraction of the Total Expected Fatalities",main=mainName)
+    lines(datasetone$days[c(1:lastobs)],datasetone$fatalities[c(1:lastobs)],lwd=5)
+    lines(datasetone$days[c(1:lastobs)],10*datasetone$newfatalities[c(1:lastobs)],lty=3,lwd=4,col=2)
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust
 
     lines(10*predictedTotalNewCases,lty=4,col="red")
     dmax <- which.max(predictedTotalNewCases)
-    daystopeak <- cdffit$to-numdays;
-    text(dmax+7,10*max(predictedTotalNewCases)+0.05,paste("Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+    daystopeak <- cdffit$to-lastobs;
+    text(dmax + 10,
+         0.95,
+         paste("Days to peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+    abline(v=dmax,col="red",lty=2)
     
-
+  if (numdays ==  lastobs)
+  {
+    datasetOptimist <- datasetone;
+    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
+    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays)  
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust
     lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
     dmax <- which.max(predictedTotalNewCases)
-    daystopeak <- cdffit2$to-numdays;
-    text(dmax+7,10*max(predictedTotalNewCases)/maxgain+0.05,paste("Opt: Days to Peak:",sprintf("%3.0f",daystopeak)),cex=0.8)
+    daystopeak <- cdffit2$to-lastobs;
+    text(dmax - 12,
+         0.95,
+         paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
+         cex=0.8,
+         col="pink")
+    abline(v=dmax,col="pink")
+  }
 
     for (endDay in c(7,14,21,28))
     {
+      numdays <- which.max(datasetone$newfatalities);
       ndays <- numdays - endDay
       if (ndays > 7)
       {
@@ -370,10 +423,10 @@ for (cn in c(1:length(totaldeaths)))
          main=mainName)
   }
   legend("topright",
-         legend = c("Estimated","Observed","New Fatalities","Estimated New","Optimistic New","One Week Ago","Two Weeks Ago","Three Weeks Ago","Four Weeks Ago"),
+         legend = c("Estimated","Observed","New Fatalities","Estimated New","Optimistic New","One Week","Two Weeks","Three Weeks","Four Weeks"),
          col = c(1,1,2,2,"pink",3,4,5,6),
          lty = c(2,1,3,4,5,6,6,6,6),
-         lwd = c(1,5,4,1,2,1,1,1,1),cex=0.5)
+         lwd = c(1,5,4,1,2,1,1,1,1),cex=0.75)
   z <- c(0:10)/100;
   axis(4, at=10*z,labels=round(z,digits=2),
   col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
