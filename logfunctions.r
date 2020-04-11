@@ -10,7 +10,7 @@ logisticpdf <- function(days,ro,to)
   return(pdf);
 }
 
-logisitcfit <- function(data,ro,to)
+logisitcfit <- function(data,ro,to,gratio=2)
 {
   cdfestimate <- NULL;
   pdfestimate <- NULL;
@@ -27,7 +27,7 @@ logisitcfit <- function(data,ro,to)
   accAdjust <- 1.0;
   error <- FALSE;
   
-  while ((abs(adjusto - adjust) > 0.005) && (accAdjust < 3) && (accAdjust > (1.0/3.0)))
+  while ((abs(adjusto - adjust) > 0.005) && (accAdjust < gratio) && (accAdjust > (1.0/gratio)))
   {
     adjusto <- 1.0;
     loops <- loops + 1;
@@ -98,7 +98,7 @@ logisitcfit <- function(data,ro,to)
     {
       error <- TRUE;
     }
-    if (loops >50)
+    if (loops > 1000)
     {
       adjusto <- adjust
     }

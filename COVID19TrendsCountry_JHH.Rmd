@@ -1,0 +1,312 @@
+---
+title: "Covid Forecasting"
+author: "Jose Tamez"
+date: "4/9/2020"
+output: 
+  html_document: 
+    fig_caption: yes
+    toc: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, error = FALSE, warning = FALSE, message = FALSE,comment = "#>")
+library(stringr)
+
+
+```
+
+
+## Forcasting COVID-19 Deaths
+
+A simple model for the estimation of the maximum percentage of deaths due to COVID-19.
+
+NOTE: I'm not an epidiomiologist. 
+
+The prediction based on a simple logistic model and:
+
+70% of SARS-CoV-2 exposure  
+10% Infection efficacy ie. 10% of the exposure subjects turns into a Covid-19 case  
+1% of Mortality  
+
+For each country we will use the urban population  
+
+I'll estimate the death rates based on current trends fitted to the logistic function.  
+The last 14 days will be used for the peak estimations.
+Peak estimations will be done using:  
+
+If the data has not reached the peak the plots will show estimations based on:  
+
+1) The last reported 14 observations  
+2) 14 observations from the last week  
+3) 14 observations ending two weeks ago   
+4) 14 observations ending three weeks ago  
+5) 14 observations ending four weeks ago  
+
+
+If the data reached the peak the plots will show:  
+
+1) all the points after one week before the peak   
+2) 14 observations before one week prior the peak   
+3) 14 observations ending two weeks prior the peak    
+4) 14 observations ending three week prior the peak  
+5) 14 observations ending four week prior the peak    
+
+
+
+We are also providing optimistic models. We assume that the # of fatalities is one third the expected.
+
+
+
+Notes:  
+
+1) If the current observations does not mach the estimated CDF, do not trust the predictions.  
+2) If predicted CDF does not reach 1.0, then there is the potential for more infection in the future or COVID-19 is not as deadly as I estimated  
+
+
+### Source code:  
+
+https://github.com/joseTamezPena/COVID_Forecasting
+
+
+```{r parameters}
+# The expetec %  of deaths in each country
+
+expectedtotalFatalities = 0.7*0.1*0.01
+optGain <- 3
+# The number of observations used for the trends
+daysWindow <- 14
+currentdate <- "April 10:" 
+
+```
+
+
+### Loading the data
+
+The data is the time_covid19ing set from CSSE at Johns Hopkins University:
+
+https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv
+
+
+
+```{r , echo = FALSE}
+
+time_covid19 <- read.csv("~/GitHub/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv", stringsAsFactors=FALSE)
+
+time_covid19[time_covid19$Country.Region=="Korea, South","Country.Region"] <- "South Korea"
+time_covid19[time_covid19$Country.Region=="Czechia","Country.Region"] <- "Czech Republic (Czechia)"
+time_covid19[time_covid19$Country.Region=="US","Country.Region"] <- "United States"
+
+time_covid19Country <- time_covid19[time_covid19$Province.State == "",]
+time_covid19Country$Province.State <- NULL
+time_covid19Country$Lat <- NULL
+time_covid19Country$Long <- NULL
+rownames(time_covid19Country) <- time_covid19Country$Country.Region
+time_covid19Country$Country.Region <- NULL
+
+covid19_datapopulation <- read.csv("./Kaggle/covid19_data - population.csv", stringsAsFactors=FALSE)
+rownames(covid19_datapopulation) <- paste(covid19_datapopulation$Country,":",sep="")
+
+
+totalPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Population_2020,",",""))
+totalUrbanPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Urban_pop_pct,"\\%",""))/100.0
+totalUrbanPoulation[is.na(totalUrbanPoulation)] <- 1.0;
+totalUrbanPoulation <- totalPoulation*totalUrbanPoulation
+
+
+covid19_datapopulation$ExpectedFatalities <- expectedtotalFatalities*(
+                                                  totalUrbanPoulation + 
+                                                    0.1*(totalPoulation-totalUrbanPoulation)
+                                              )
+
+time_covid19CountryPerc <- time_covid19Country
+time_covid19CountryPerc <- time_covid19Country/covid19_datapopulation[rownames(time_covid19Country),"ExpectedFatalities"]
+
+
+expfatalities <- covid19_datapopulation$ExpectedFatalities/1.0e6
+names(expfatalities) <- covid19_datapopulation$Country
+expfatalities <- expfatalities[order(-expfatalities)]
+plot.new()
+op <- par(no.readonly = TRUE)
+par(mar=c(8,4,4,4),pty="m")
+#barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,horiz = TRUE,main="Expected Fatalities",xlab="MIllions")
+barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,main="Expected Fatalities",ylab="Millions")
+par(op)
+
+```
+
+Ploting some trends
+
+```{r}
+Country.Region <- rownames(time_covid19Country)
+totaldeaths <- as.numeric(time_covid19Country[,ncol(time_covid19Country)])
+names(totaldeaths) <- Country.Region
+totaldeaths <- totaldeaths[order(-totaldeaths)]
+
+
+ydata <- as.numeric(time_covid19Country[names(totaldeaths[1]),])
+ydata <- ydata[ydata > 1e-6]
+plot(ydata,main="% Fatalities",xlab="Days",ylab="Fatalities",xlim=c(1,ncol(time_covid19Country)))
+text(length(ydata)-1,ydata[length(ydata)],names(totaldeaths[1]))
+
+for (ctr in names(totaldeaths[1:30]))
+{
+  ydata <- as.numeric(time_covid19Country[ctr,])
+  ydata <- ydata[ydata > 1e-6]
+  lines(ydata)
+  text(length(ydata)-1,ydata[length(ydata)],ctr)
+}
+
+totaldeaths  <- totaldeaths[!is.na(totaldeaths)]
+totaldeaths  <- totaldeaths[totaldeaths > 100]
+
+```
+
+## Trends Modeling Functions
+
+```{r, echo = FALSE}
+source('./logfunctions.r')
+
+```
+
+
+
+## Estimating the peaks
+
+```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+par(op)
+cn = 2
+par(mfrow=c(1,1),cex=0.75,mar=c(4,4,4,5))
+for (cn in c(1:length(totaldeaths)))
+{
+  endDay <- 0
+  countryNumber <- cn
+  mainName <- paste(currentdate,names(totaldeaths[countryNumber]))
+  
+  datsetone <- as.numeric(time_covid19CountryPerc[names(totaldeaths[countryNumber]),])
+  datsetone <- datsetone[datsetone > 0.0]
+  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  lastobs <- length(datsetone)
+  datsetchange <- 0.35*datsetchange + 
+                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  
+  datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+
+  lastobs <- nrow(datasetone);
+  numdays <- min(nrow(datasetone),which.max(datasetone$newfatalities)+7)
+
+  ndays <- max(c(numdays - endDay,7))
+  startday <- max(1,ndays - daysWindow)
+  daysrange <- c(startday:lastobs)
+  
+  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays)
+  daystopeak <- cdffit$to-lastobs
+  if (daystopeak <= 1)
+  {
+    cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)
+  }
+
+  
+  
+  datasetOptimist <- datasetone;
+  maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+  
+
+  if (!inherits(cdffit, "try-error"))
+  {
+    predictedTotalCases <- logisticcdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+    ymax <- max(1,max(predictedTotalCases))
+
+    plot(predictedTotalCases,ylim=c(0,ymax),type="l",lty=2,xlab="Days from first fatality",ylab="Fraction of the Total Expected Fatalities",main=mainName)
+    lines(datasetone$days[c(1:lastobs)],datasetone$fatalities[c(1:lastobs)],lwd=5)
+    lines(datasetone$days[c(1:lastobs)],10*datasetone$newfatalities[c(1:lastobs)],lty=3,lwd=4,col=2)
+
+    predictedTotalNewCases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust
+    lines(10*predictedTotalNewCases,lty=4,col="red")
+    dmax <- which.max(predictedTotalNewCases)
+    daystopeak <- cdffit$to-lastobs;
+    text(dmax + 10,0.95,
+         paste("Days to peak:", sprintf("%3.0f",daystopeak)),
+         cex=0.8)
+    abline(v=dmax,col="red",lty=2)
+    
+    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalCases)
+    text(100,0.5,
+         paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
+         cex=0.8)
+    
+    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)
+    text(100,0.45,
+         paste("Maximum deaths per day:", sprintf("%3.0f",expfat)),
+         cex=0.8)
+  if (numdays ==  lastobs)
+  {
+    datasetOptimist <- datasetone;
+    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
+    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,10)  
+    predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust
+
+    predictedTotalCases <- logisticcdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
+    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalCases)/maxgain
+    text(100,0.4,
+         paste("Optimistic Deaths:", sprintf("%3.0f",expfat)),
+         cex=0.8)
+    
+    
+    lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
+    dmax <- which.max(predictedTotalNewCases)
+    daystopeak <- cdffit2$to-lastobs;
+    text(dmax - 12,
+         0.95,
+         paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
+         cex=0.8,
+         col="pink")
+    abline(v=dmax,col="pink")
+  }
+
+    for (endDay in c(7,14,21,28))
+    {
+      numdays <- which.max(datasetone$newfatalities);
+      ndays <- numdays - endDay
+      if (ndays > 7)
+      {
+        startday <- max(1,ndays - daysWindow)
+        daysrange <- c(startday:ndays)
+        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)  
+        if (!inherits(cdffit, "try-error"))
+        {
+          newcases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+          lines(10*newcases,lty=6,col=(endDay+14)/7,lwd= 1)
+        }
+      }
+    }
+  }
+  else
+  {
+    plot(datasetone$days[c(1:ndays)],datasetone$fatalities[c(1:ndays)],
+         ylim=c(0,1.0),
+         type="l",
+         lty=2,
+         xlab="days",
+         ylab="% Fatalities",
+         main=mainName)
+  }
+  legend("topright",
+         legend = c("Estimated","Observed","New Fatalities","Estimated New","Optimistic New","One Week","Two Weeks","Three Weeks","Four Weeks"),
+         col = c(1,1,2,2,"pink",3,4,5,6),
+         lty = c(2,1,3,4,5,6,6,6,6),
+         lwd = c(1,5,4,1,2,1,1,1,1),cex=0.75)
+  z <- c(0:10)/100;
+  axis(4, at=10*z,labels=round(z,digits=2),
+  col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
+  mtext("Fraction of New Fatalities", cex=0.5,side=4, line=3, cex.lab=0.3, col="black",las=3)
+
+}
+
+```
+
