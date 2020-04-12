@@ -1,7 +1,7 @@
 ---
 title: "Covid Forecasting"
 author: "Jose Tamez"
-date: "4/9/2020"
+date: "4/10/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -56,7 +56,7 @@ If the data reached the peak the plots will show:
 
 
 
-We are also providing optimistic models. We assume that the # of fatalities is one third the expected.
+We are also providing optimistic models. We assume that the # of fatalities is half the expected.
 
 
 
@@ -75,7 +75,7 @@ https://github.com/joseTamezPena/COVID_Forecasting
 # The expetec %  of deaths in each country
 
 expectedtotalFatalities = 0.7*0.1*0.01
-optGain <- 3
+optGain <- 2
 # The number of observations used for the trends
 daysWindow <- 14
 currentdate <- "April 10:" 
@@ -178,7 +178,7 @@ source('./logfunctions.r')
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 par(op)
-cn = 2
+cn = 1
 par(mfrow=c(1,1),cex=0.75,mar=c(4,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
@@ -188,10 +188,12 @@ for (cn in c(1:length(totaldeaths)))
   
   datsetone <- as.numeric(time_covid19CountryPerc[names(totaldeaths[countryNumber]),])
   datsetone <- datsetone[datsetone > 0.0]
-  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  datsetchangep <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
   lastobs <- length(datsetone)
-  datsetchange <- 0.35*datsetchange + 
-                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
+  datsetchange <- 0.5*(datsetchangep + datsetchangen)
+  datsetchange <- 0.65*datsetchange + 
+                  0.35*c(datsetchangep[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
 
@@ -234,11 +236,15 @@ for (cn in c(1:length(totaldeaths)))
     abline(v=dmax,col="red",lty=2)
     
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalCases)
+    text(100,0.55,
+         paste("Current Deaths:", sprintf("%3.0f",max(time_covid19Country[names(totaldeaths[countryNumber]),]))),
+         cex=0.8)
     text(100,0.5,
          paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
          cex=0.8)
     
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)
+    expfat <- max(expfat,datsetchange)
     text(100,0.45,
          paste("Maximum deaths per day:", sprintf("%3.0f",expfat)),
          cex=0.8)

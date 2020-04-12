@@ -186,10 +186,12 @@ for (cn in c(1:length(totaldeaths)))
   mainName <- paste(currentdate,names(totaldeaths[countryNumber]))
   
   datsetone <- trainCountry[trainCountry$Country_Region == names(totaldeaths[countryNumber]),"PerFatalities"]
-  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  datsetchangep <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
   lastobs <- length(datsetone)
-  datsetchange <- 0.35*datsetchange + 
-                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
+  datsetchange <- 0.5*(datsetchangep + datsetchangen)
+  datsetchange <- 0.65*datsetchange + 
+                  0.35*c(datsetchangep[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
 
@@ -343,10 +345,12 @@ for (cn in c(1:length(totaldeaths)))
   mainName <- paste(currentdate,names(totaldeaths[stateNumber]))
   
   datsetone <- trainProvince[trainProvince$Province_State == names(totaldeaths[stateNumber]),"PerFatalities"]
-  datsetchange <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  datsetchangep <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
   lastobs <- length(datsetone)
-  datsetchange <- 0.35*datsetchange + 
-                  0.65*c(datsetone[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+  datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
+  datsetchange <- 0.5*(datsetchangep + datsetchangen)
+  datsetchange <- 0.65*datsetchange + 
+                  0.35*c(datsetchangep[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
   lastobs <- length(datsetone)
