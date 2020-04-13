@@ -58,7 +58,6 @@ If the data reached the peak the plots will show:
 
 We are also providing optimistic models. We assume that the # of fatalities is one third the expected.
 
-For Mexico we set the optimistic factor to 5. For every other country is set to 3.
 
 
 Notes:  
@@ -77,10 +76,9 @@ https://github.com/joseTamezPena/COVID_Forecasting
 
 expectedtotalFatalities = 0.7*0.1*0.01
 optGain <- 3
-mexicoGain <- 5
 # The number of observations used for the trends
 daysWindow <- 14
-currentdate <- "April 9:" 
+currentdate <- "April 11:" 
 
 ```
 
@@ -181,7 +179,6 @@ cn = 1
 par(mfrow=c(1,1),cex=0.75,mar=c(4,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
-  endDay <- 0
   countryNumber <- cn
   mainName <- paste(currentdate,names(totaldeaths[countryNumber]))
   
@@ -196,29 +193,23 @@ for (cn in c(1:length(totaldeaths)))
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
 
   lastobs <- nrow(datasetone);
-  numdays <- min(nrow(datasetone),which.max(datasetone$newfatalities)+7)
+  numdays <- lastobs
 
-  ndays <- max(c(numdays - endDay,7))
+  ndays <- max(c(numdays,7))
   startday <- max(1,ndays - daysWindow)
   daysrange <- c(startday:lastobs)
   
-  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays)  
+  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,5)  
 
   
   
   datasetOptimist <- datasetone;
   maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
   
-  #Just for Mexico
-  
-  if (names(totaldeaths[countryNumber]) == "Mexico")
-  {
-     maxgain <- mexicoGain
-  }
-  
+
   datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
   datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-  cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays)  
+  cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,5)  
 
 
   if (!inherits(cdffit, "try-error"))
@@ -245,7 +236,7 @@ for (cn in c(1:length(totaldeaths)))
     maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
     datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
     datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays)  
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,5)  
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust
     lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
     dmax <- which.max(predictedTotalNewCases)
@@ -266,7 +257,7 @@ for (cn in c(1:length(totaldeaths)))
       {
         startday <- max(1,ndays - daysWindow)
         daysrange <- c(startday:ndays)
-        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays)  
+        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,5)  
         if (!inherits(cdffit, "try-error"))
         {
           newcases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;

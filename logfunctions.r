@@ -56,7 +56,7 @@ logisitcfit <- function(data,ro,to,gratio=2)
         pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
                                data = data,
                                start=list(ro = fro ,to = fto),
-                               control=list(warnOnly=TRUE)))
+                               ))
         if (!inherits(pdfestimate, "try-error"))
         {
           psmo <- try(summary(pdfestimate))
