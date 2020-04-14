@@ -1,7 +1,7 @@
 ---
-title: "Covid Forecasting"
+title: "Covid Peak Forecasting"
 author: "Jose Tamez"
-date: "4/10/2020"
+date: "4/13/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -78,7 +78,7 @@ expectedtotalFatalities = 0.7*0.1*0.01
 optGain <- 2
 # The number of observations used for the trends
 daysWindow <- 14
-currentdate <- "April 12:" 
+currentdate <- "April 13:" 
 
 ```
 
