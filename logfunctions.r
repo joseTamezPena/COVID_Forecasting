@@ -32,7 +32,8 @@ logisitcfit <- function(data,ro,to,gratio=2)
     adjusto <- 1.0;
     loops <- loops + 1;
     pLeft <- 1.0-data$fatalities[lastObs];
-    #    cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+    if (data$fatalities[lastObs] > 0.5) pLeft <- 1.0 - pLeft
+#        cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
     cdfestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
                            data = data,
                            start=list(ro = fro,to = fto),
@@ -52,7 +53,7 @@ logisitcfit <- function(data,ro,to,gratio=2)
         {
           fto <- to;
         }
-        #     cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+ #        cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
         pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
                                data = data,
                                start=list(ro = fro ,to = fto),
@@ -73,7 +74,16 @@ logisitcfit <- function(data,ro,to,gratio=2)
               fto <- to;
             }
             nleft <- 1.0-logisticcdf(data$days[lastObs], fro, fto);
-            adjust <- (0.25 + pLeft)/(0.25 + nleft);
+            adjust <- (0.5 + pLeft)/(0.5 + nleft);
+            if (data$fatalities[lastObs] > 0.5) 
+            {
+              nleft <- 1.0 - nleft;
+              adjust <- (0.5 + nleft)/(0.5 + pLeft);
+            }
+            else
+            {
+              adjust <- (0.5 + pLeft)/(0.5 + nleft);
+            }
             if (adjust > 1.2)
             {
               adjust <- 1.2;
@@ -85,7 +95,7 @@ logisitcfit <- function(data,ro,to,gratio=2)
             accAdjust <- accAdjust*adjust;
             data$fatalities <- adjust*data$fatalities;
             data$newfatalities <- adjust*data$newfatalities;
-            #      cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+#                  cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
           }
         }
       }

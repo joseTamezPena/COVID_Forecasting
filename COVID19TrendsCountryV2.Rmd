@@ -1,7 +1,7 @@
 ---
 title: "Covid Forecasting"
 author: "Jose Tamez"
-date: "4/9/2020"
+date: "4/13/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -78,7 +78,7 @@ expectedtotalFatalities = 0.7*0.1*0.01
 optGain <- 3
 # The number of observations used for the trends
 daysWindow <- 14
-currentdate <- "April 11:" 
+currentdate <- "April 12:" 
 
 ```
 
@@ -199,7 +199,7 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,ndays - daysWindow)
   daysrange <- c(startday:lastobs)
   
-  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,5)  
+  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)  
 
   
   
@@ -209,7 +209,7 @@ for (cn in c(1:length(totaldeaths)))
 
   datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
   datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-  cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,5)  
+  cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,10)  
 
 
   if (!inherits(cdffit, "try-error"))
@@ -236,7 +236,7 @@ for (cn in c(1:length(totaldeaths)))
     maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
     datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
     datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,5)  
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,ndays,10)  
     predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust
     lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
     dmax <- which.max(predictedTotalNewCases)
@@ -257,7 +257,7 @@ for (cn in c(1:length(totaldeaths)))
       {
         startday <- max(1,ndays - daysWindow)
         daysrange <- c(startday:ndays)
-        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,5)  
+        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)  
         if (!inherits(cdffit, "try-error"))
         {
           newcases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
