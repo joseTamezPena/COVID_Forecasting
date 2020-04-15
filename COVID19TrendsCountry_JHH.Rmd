@@ -1,5 +1,5 @@
 ---
-title: "Covid Peak Forecasting"
+title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
 date: "4/14/2020"
 output: 
@@ -21,9 +21,15 @@ library(stringr)
 
 ## Forcasting COVID-19 Deaths
 
-A simple model for the estimation of the maximum percentage of deaths due to COVID-19.
+A simple model for the estimation of the maximum percentage of deaths due to COVID-19.  
 
-NOTE: I'm not an epidiomiologist. 
+
+============================================================================   
+
+NOTE: I'm not an epidemiologist, so these predictions are not official.  
+I'm providing them to get an idea of when the COVID-19 peaks may occur.  
+
+============================================================================   
 
 The prediction based on a simple logistic model and:
 
@@ -56,7 +62,7 @@ If the data reached the peak the plots will show:
 
 
 
-We are also providing optimistic models. We assume that the # of fatalities is half the expected.
+I'm also providing optimistic models. I´m assuming that the # of fatalities is half the expected.
 
 
 
@@ -182,7 +188,7 @@ source('./logfunctions.r')
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 par(op)
-cn = 3
+cn = 6
 par(mfrow=c(1,1),cex=0.75,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
@@ -203,7 +209,7 @@ for (cn in c(1:length(totaldeaths)))
   datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
   datsetchange <- 0.5*(datsetchangep + datsetchangen)
   datsetchange <- 0.65*datsetchange + 
-                  0.35*c(datsetchangep[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
+                  0.35*c(datsetchange[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
 
@@ -213,14 +219,14 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,numdays - daysWindow)
   daysrange <- c(startday:lastobs)
   
-  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,numdays,5)
+  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,numdays,10)
   daystopeak <- cdffit$to-lastobs
   if (daystopeak <= 1)
   {
     pstartday <- max(1,lastobs - 2.0*daysWindow)
 #    pstartday <- max(1,lastobs - daysWindow)
     pdaysrange <- c(pstartday:lastobs)
-    cdffit <- logisitcfit(datasetone[pdaysrange,],cdffit$ro,cdffit$to,5)
+    cdffit <- logisitcfit(datasetone[pdaysrange,],cdffit$ro,cdffit$to,10,cdffit$adjust)
   }
   
   datasetOptimist <- datasetone;

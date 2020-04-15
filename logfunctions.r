@@ -10,7 +10,7 @@ logisticpdf <- function(days,ro,to)
   return(pdf);
 }
 
-logisitcfit <- function(data,ro,to,gratio=2)
+logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
 {
   cdfestimate <- NULL;
   pdfestimate <- NULL;
@@ -24,8 +24,11 @@ logisitcfit <- function(data,ro,to,gratio=2)
   adjusto <- 0.0;
   loops <- 0;
   defecitRatio <- 1.0;
-  accAdjust <- 1.0;
+  accAdjust <- adjini;
   error <- FALSE;
+
+  data$fatalities <- adjini*data$fatalities;
+  data$newfatalities <- adjini*data$newfatalities;
   
   while ((abs(adjusto - adjust) > 0.005) && (accAdjust < gratio) && (accAdjust > (1.0/gratio)))
   {
@@ -36,6 +39,7 @@ logisitcfit <- function(data,ro,to,gratio=2)
 #        cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
     cdfestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
                            data = data,
+#                           control=list(warnOnly = TRUE),
                            start=list(ro = fro,to = fto),
     ));
     if (!inherits(cdfestimate, "try-error"))
@@ -53,9 +57,10 @@ logisitcfit <- function(data,ro,to,gratio=2)
         {
           fto <- to;
         }
- #        cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+#         cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
         pdfestimate <- try(nls(newfatalities ~ logisticpdf(days, ro, to),
                                data = data,
+#                               control=list(warnOnly = TRUE),
                                start=list(ro = fro ,to = fto),
                                ))
         if (!inherits(pdfestimate, "try-error"))
@@ -122,7 +127,7 @@ logisitcfit <- function(data,ro,to,gratio=2)
   {
     defecitRatio <- logisticcdf(data$days[lastObs], fro, fto)/opLeft;
   }
-  #  cat(sprintf("Defecit= %5.3f, ro= %8.3f to=%8.3f",defecitRatio,fro,fto),"\n")
+#    cat(sprintf("Defecit= %5.3f, ro= %8.3f to=%8.3f",defecitRatio,fro,fto),"\n")
   
   models <- list(CDF=cdfestimate,
                  pdf=pdfestimate,
