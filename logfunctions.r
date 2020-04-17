@@ -30,7 +30,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
   data$fatalities <- adjini*data$fatalities;
   data$newfatalities <- adjini*data$newfatalities;
   
-  while ((abs(adjusto - adjust) > 0.005) && (accAdjust < gratio) && (accAdjust > (1.0/gratio)))
+  while ((abs(adjusto - adjust) > 0.01) && (accAdjust < gratio) && (accAdjust > (1.0/gratio)))
   {
     adjusto <- 1.0;
     loops <- loops + 1;
@@ -83,11 +83,11 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
             if (data$fatalities[lastObs] > 0.5) 
             {
               nleft <- 1.0 - nleft;
-              adjust <- (0.5 + nleft)/(0.5 + pLeft);
+              adjust <- (0.25 + nleft)/(0.25 + pLeft);
             }
             else
             {
-              adjust <- (0.5 + pLeft)/(0.5 + nleft);
+              adjust <- (0.25 + pLeft)/(0.25 + nleft);
             }
             if (adjust > 1.2)
             {
