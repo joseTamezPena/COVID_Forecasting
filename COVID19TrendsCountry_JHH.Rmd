@@ -39,9 +39,9 @@ NOTE:
 
 The prediction based on a simple logistic model and:
 
-70% of SARS-CoV-2 exposure  
+30% of SARS-CoV-2 exposure  
 10% Infection efficacy i.e. 10% of the exposure subjects turns into a Covid-19 case  
-1% of Mortality  
+2% of Mortality  
 
 For each country we will use the urban population  
 
@@ -70,7 +70,16 @@ The flattening of the curve will be plotted as a grey line. It represents the ma
 
 The peaks locations as red diamonds. The estimated peaks are based on information from dates before the actual peak. You can use them to get an idea of how reliable the estimations were. 
 
-I am also providing optimistic models. I´m assuming that the # of fatalities are 20% of the total expected.
+I am also providing optimistic models. I´m assuming that the # of fatalities are 20% of the total expected.  
+
+
+=====================================================================================  
+
+4/16/2020 Update:  
+
+Now the plots include the 95% confidence intervals of the expected peak. The estimations are done for the original estimations and the optimistic ones.
+
+
 
 
 
@@ -88,8 +97,8 @@ https://github.com/joseTamezPena/COVID_Forecasting
 ```{r parameters}
 # The expetec %  of deaths in each country
 
-expectedtotalFatalities = 0.7*0.1*0.01
-optGain <- 3
+expectedtotalFatalities = 0.30*0.1*0.02
+optGain <- 5
 # The number of observations used for the trends
 daysWindow <- 14
 
@@ -202,7 +211,7 @@ for (cn in c(1:length(totaldeaths)))
 {
   thepeakdates <- character(6);
   countryNumber <- cn
-  mainName <- paste(currentdate,names(totaldeaths[countryNumber]))
+  mainName <- names(totaldeaths[countryNumber])
   
   datsetone <- as.numeric(time_covid19CountryPerc[names(totaldeaths[countryNumber]),])
   thedates <- colnames(time_covid19CountryPerc)[datsetone > 0.0]
@@ -238,13 +247,16 @@ for (cn in c(1:length(totaldeaths)))
   }
   
   datasetOptimist <- datasetone;
-  maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
-  
+
   athedates <- thedates[c(1:length(thedates)) %% 7 == 1]
   
 
   if (!inherits(cdffit, "try-error"))
   {
+    bootest <- bootstraplogisitcfit(datasetone[daysrange,],cdffit)
+    torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
+
+    
     dayloc <- numeric()
     maxdayloc <- numeric()
     maxloc <- numeric()
@@ -269,6 +281,7 @@ for (cn in c(1:length(totaldeaths)))
     dmax <- which.max(predictedTotalNewCases)
     peakloc <- dmax
     daystopeak <- cdffit$to-lastobs;
+    daystopeakrange <- torange-lastobs;
 #    if (daystopeak <= 0)
 #    {
 #      daystopeak <- min(cdffit$to,which.max(datasetone$newfatalities))-lastobs;
@@ -276,23 +289,32 @@ for (cn in c(1:length(totaldeaths)))
 
     peakdate <- thedates[lastobs] + as.integer(daystopeak+0.5)
     text(dmax + 10,0.95,
-         paste("Days to peak:", sprintf("%3.0f",daystopeak)),
+         paste("Days to peak:", sprintf("%4.1f",daystopeakrange[2])),
+         cex=0.8)
+    text(dmax + 10,0.90,
+         sprintf("(%4.1f to %4.1f)",daystopeakrange[1],daystopeakrange[3]),
          cex=0.8)
     abline(v=dmax,col="red",lty=2)
 
         
-    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalCases)
-    text(100,0.55,
+    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*
+      logisticcdf(10000,cdffit$ro,cdffit$to)/cdffit$adjust;
+    text(90,0.55,
          paste("Current Deaths:", sprintf("%3.0f",max(time_covid19Country[names(totaldeaths[countryNumber]),]))),
          cex=0.8)
-    text(100,0.5,
+    text(90,0.5,
          paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
          cex=0.8)
     
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)
     expfat <- max(expfat,datsetchange)
-    text(100,0.45,
+    text(90,0.45,
          paste("Maximum Deaths per Day:", sprintf("%3.0f",expfat)),
+         cex=0.8)
+    firstdate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[1]+0.5),"%a %b %d, %y"))
+    finaldate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[3]+0.5),"%a %b %d, %y"))
+    text(90,0.40,
+         paste("Peak Between:",firstdate,"and",finaldate),
          cex=0.8)
     dayloc <- lastobs;
     if (daystopeak < 0)
@@ -308,30 +330,46 @@ for (cn in c(1:length(totaldeaths)))
     maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
     datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
     datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,lastobs,10)  
+    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,lastobs,10)
 
-    predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
     
-    predictedTotalCases <- logisticcdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
-    lines(predictedTotalCases/maxgain,lty=5,lwd=2,col="pink")
+    if (!inherits(cdffit2, "try-error"))
+    {
 
-    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalCases)/maxgain
-    text(100,0.4,
-         paste("Optimistic Deaths:", sprintf("%3.0f",expfat)),
-         cex=0.8)
-    
-    
-    lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
-    dmax <- which.max(predictedTotalNewCases)
-    daystopeak <- cdffit2$to-lastobs;
-    text(dmax - 12,
-         0.95,
-         paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
-         cex=0.8,
-         col="pink")
-    abline(v=dmax,col="pink")
-    peakdate <- c(peakdate,thedates[lastobs] + as.integer(daystopeak+0.5))
-    peakloc <- c(peakloc,dmax)
+      predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
+      
+      predictedTotalCases <- logisticcdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
+      lines(predictedTotalCases/maxgain,lty=5,lwd=2,col="pink")
+  
+      expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),
+                                       "ExpectedFatalities"]*
+        logisticcdf(10000,cdffit2$ro,cdffit2$to)/cdffit2$adjust/maxgain;
+      text(90,0.35,
+           paste("Optimistic Deaths:", sprintf("%3.0f",expfat)),
+           cex=0.8)
+      
+      
+      lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
+      dmax <- which.max(predictedTotalNewCases)
+      daystopeak <- cdffit2$to-lastobs;
+      text(dmax - 12,
+           0.95,
+           paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
+           cex=0.8,
+           col="pink")
+      abline(v=dmax,col="pink")
+      peakdate <- c(peakdate,thedates[lastobs] + as.integer(daystopeak+0.5))
+      peakloc <- c(peakloc,dmax)
+      bootest <- bootstraplogisitcfit(datasetOptimist[daysrange,],cdffit2)
+      torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
+      daystopeakrange <- torange-lastobs;
+      firstdate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[1]+0.5),"%a %b %d, %y"))
+      finaldate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[3]+0.5),"%a %b %d, %y"))
+      text(90,0.30,
+           paste("Peak Between:",firstdate,"and",finaldate),
+           cex=0.8)
+    }
+
   }
     axis(1,at=c(7*(0:(length(athedates)-1)),lastobs,peakloc),labels=c(athedates,thedates[lastobs],peakdate),las=2,cex.axis=0.75)
 

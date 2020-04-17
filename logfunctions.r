@@ -30,7 +30,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
   data$fatalities <- adjini*data$fatalities;
   data$newfatalities <- adjini*data$newfatalities;
   
-  while ((abs(adjusto - adjust) > 0.01) && (accAdjust < gratio) && (accAdjust > (1.0/gratio)))
+  while ((abs(adjusto - adjust) > 0.01) && (accAdjust <= gratio) && (accAdjust >= (1.0/gratio)))
   {
     adjusto <- 1.0;
     loops <- loops + 1;
@@ -141,4 +141,29 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
   class(models) <- "logisticFit";
   if (error) class(models) <- append(class(models),"try-error")
   return (models);
+}
+
+bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=1000)
+{
+  toestimations <- numeric(n);
+  roestimations <- numeric(n);
+  optGain <- ratiorange^(runif(n, -1,1));
+  for (bsamples in 1:n)
+  {
+    toestimations[bsamples] <- inifit$to;
+    roestimations[bsamples] <- inifit$ro
+    bootresample <- sample(nrow(data),nrow(data),TRUE)
+    ndata <- data[bootresample,];
+    maxgain <- min(0.9/max(ndata$fatalities),optGain[bsamples]);
+    ndata$fatalities <- maxgain*ndata$fatalities;
+    ndata$newfatalities <- maxgain*ndata$newfatalities;
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,inifit$adjust,inifit$adjust))
+    if (!inherits(nfit, "try-error"))
+    {
+      toestimations[bsamples] <- nfit$to;
+      roestimations[bsamples] <- nfit$ro
+    }
+  }
+  result <- list(to=toestimations,ro=roestimations,gains=optGain)
+  return(result)
 }
