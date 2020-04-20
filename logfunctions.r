@@ -29,14 +29,18 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
 
   data$fatalities <- adjini*data$fatalities;
   data$newfatalities <- adjini*data$newfatalities;
+#  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs(adjusto - adjust) > 0.01) && (accAdjust <= gratio) && (accAdjust >= (1.0/gratio)))
+  while ((abs(adjusto - adjust) > 0.01) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
     adjusto <- 1.0;
     loops <- loops + 1;
     pLeft <- 1.0-data$fatalities[lastObs];
-    if (data$fatalities[lastObs] > 0.5) pLeft <- 1.0 - pLeft
-#        cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+    if (data$fatalities[lastObs] > 0.5) 
+    {
+      pLeft <- 1.0 - pLeft;
+    }
+#    cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
     cdfestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
                            data = data,
 #                           control=list(warnOnly = TRUE),
@@ -100,7 +104,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
             accAdjust <- accAdjust*adjust;
             data$fatalities <- adjust*data$fatalities;
             data$newfatalities <- adjust*data$newfatalities;
-#                  cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+ #                 cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
           }
         }
       }
