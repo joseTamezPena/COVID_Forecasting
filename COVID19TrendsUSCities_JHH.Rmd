@@ -34,6 +34,10 @@ NOTE:
 4) I will update the predictions after 7:00pm CT every day   
 5) They will be based on CSSE at Johns Hopkins University data release.  
 
+"Disclaimer: Content from this website is STRICTLY ONLY for educational and research purposes and may contain errors. The model and data are inaccurate to the complex, evolving, and heterogeneous realities of different countries. Predictions are uncertain by nature. Readers must take any predictions with caution. Over-optimism based on some predicted end dates is dangerous because it may loosen our disciplines and controls and cause the turnaround of the virus and infection, and must be avoided."
+
+Statement copied from: https://ddi.sutd.edu.sg/
+
 
 ============================================================================   
 
@@ -192,7 +196,7 @@ source('./logfunctions.r')
 
 par(op)
 cn = 1
-par(mfrow=c(1,1),cex=0.75,mar=c(6,4,4,5))
+par(mfrow=c(2,2),cex=0.35,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
   thepeakdates <- character(6);
@@ -425,7 +429,7 @@ for (cn in c(1:length(totaldeaths)))
   z <- c(0:10)/100;
   axis(4, at=10*z,labels=round(z,digits=2),
   col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
-  mtext("New Fatalities as Fraction of Total Expected", cex=0.5,side=4, line=3, cex.lab=0.3, col="black",las=3)
+  mtext("New Fatalities as Fraction of Total Expected", cex=0.35,side=4, line=3, cex.lab=0.3, col="black",las=3)
 
 }
 
