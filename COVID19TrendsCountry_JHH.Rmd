@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "4/28/2020"
+date: "5/1/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -231,7 +231,7 @@ source('./logfunctions.r')
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 par(op)
-cn = 2
+cn = 16
 par(mfrow=c(2,2),cex=0.35,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
@@ -249,7 +249,7 @@ for (cn in c(1:length(totaldeaths)))
   datsetone <- datsetone[datsetone > 0.0]
   datsetchangep <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
   lastobs <- length(datsetone)
-#  plot(datsetchangep)
+  plot(datsetchangep)
   datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
 #  lines(datsetchangen,lty=1)
   datsetchange <- 0.5*(datsetchangep + datsetchangen)
@@ -258,7 +258,7 @@ for (cn in c(1:length(totaldeaths)))
                   0.35*c(datsetchange[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
 #  lines(datsetchange,lty=3)
   datsetchange[1:(length(datsetone)-1)] <- runmed(datsetchange,5)[1:(length(datsetone)-1)];
-#  lines(datsetchange,lty=4)
+  lines(datsetchange,lty=4)
   
   
   
@@ -270,7 +270,7 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,(numdays - daysWindow))
   daysrange <- c(startday:(lastobs))
   
-  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,numdays,10)
+  cdffit <- logisitcfit(datasetone[daysrange,],-0.075,numdays,5)
   which.max(datsetchange)
   daystopeak <- min(which.max(datsetchange),cdffit$to)-lastobs
   if (daystopeak <= 1)
@@ -278,7 +278,11 @@ for (cn in c(1:length(totaldeaths)))
     pstartday <- max(1,lastobs - 1.25*daysWindow)
 #    pstartday <- max(1,lastobs - daysWindow)
     pdaysrange <- c(pstartday:(lastobs))
-    cdffit <- logisitcfit(datasetone[pdaysrange,],cdffit$ro,cdffit$to,2,cdffit$adjust)
+    cdffitn <- logisitcfit(datasetone[pdaysrange,],cdffit$ro,cdffit$to,2,cdffit$adjust)
+    if (!inherits(cdffit, "try-error"))
+    {
+      cdffit <- cdffitn;
+    }
   }
   
   datasetOptimist <- datasetone;
@@ -426,7 +430,7 @@ for (cn in c(1:length(totaldeaths)))
       {
         startday <- max(1,ndays - daysWindow)
         daysrange <- c(startday:ndays)
-        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)  
+        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,5)  
         if (!inherits(cdffit, "try-error"))
         {
           newcases <- logisticpdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$adjust;
