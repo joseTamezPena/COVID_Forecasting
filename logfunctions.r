@@ -10,14 +10,27 @@ logisticpdf <- function(days,ro,to)
   return(pdf);
 }
 
-logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
+logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow(data)))
 {
+  lastObs <- daysrange[length(daysrange)];
+  if (lowf > 0)
+  {
+    data <- data[c(1:lastObs),];
+    data$fatalities <- lowess(data$fatalities[c(1:lastObs)],f=lowf)$y;
+    data$newfatalities <- 0.25*data$newfatalities[c(1:lastObs)] + 0.75*c(data$newfatalities[1],(data$fatalities[2:lastObs]-data$fatalities[1:lastObs-1]));
+    data$newfatalities <- runmed(data$newfatalities,5)
+    data$newfatalities <- lowess(data$newfatalities,f=lowf)$y
+  }
+#  print(daysrange)
+  data <- data[daysrange,];
+  lastObs <- nrow(data);
+  filterCDF <- data$fatalities;
+  filtercdf <- data$newfatalities;
   cdfestimate <- NULL;
   pdfestimate <- NULL;
   firscdftestimation <- cdfestimate;
   firspdftestimation <- pdfestimate;
   adjust <- 1.0;
-  lastObs <- nrow(data);
   fro <- ro;
   fto <- to; 
   opLeft <- data$fatalities[lastObs];
@@ -140,7 +153,9 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1)
                  firstpdf = firscdftestimation,
                  firstpdf = firspdftestimation,
                  defecitRatio=defecitRatio,
-                 adjust = accAdjust
+                 adjust = accAdjust,
+                 filterCDF = filterCDF,
+                 filterpdf = filtercdf
   )
   class(models) <- "logisticFit";
   if (error) class(models) <- append(class(models),"try-error")
@@ -152,6 +167,8 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=1000)
   toestimations <- numeric(n);
   roestimations <- numeric(n);
   optGain <- ratiorange^(runif(n, -1,1));
+  data$newfatalities <- runmed(data$newfatalities,5) #remove extremes
+
   for (bsamples in 1:n)
   {
     toestimations[bsamples] <- inifit$to;
@@ -161,7 +178,7 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=1000)
     maxgain <- min(0.9/max(ndata$fatalities),optGain[bsamples]);
     ndata$fatalities <- maxgain*ndata$fatalities;
     ndata$newfatalities <- maxgain*ndata$newfatalities;
-    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,inifit$adjust,inifit$adjust))
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,inifit$adjust,inifit$adjust,lowf=0))
     if (!inherits(nfit, "try-error"))
     {
       toestimations[bsamples] <- nfit$to;

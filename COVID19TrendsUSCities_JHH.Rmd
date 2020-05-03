@@ -215,8 +215,6 @@ for (cn in c(1:length(totaldeaths)))
   lastobs <- length(datsetone)
   datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
   datsetchange <- 0.5*(datsetchangep + datsetchangen)
-  datsetchange <- 0.65*datsetchange + 
-                  0.35*c(datsetchange[1],0.5*(datsetone[3:lastobs]-datsetone[1:(length(datsetone)-2)]),datsetchange[lastobs])
   datsetchange[1:(length(datsetone)-1)] <- runmed(datsetchange,5)[1:(length(datsetone)-1)];
 
   datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
