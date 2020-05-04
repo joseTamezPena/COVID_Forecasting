@@ -266,36 +266,55 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,(numdays - daysWindow))
   daysrange <- c(startday:(lastobs))
   
-  cdffit <- logisitcfit(datasetone,-0.075,numdays,5)
-  lines(cdffit$filterpdf,lty=1,col="red")
-  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=2,col="pink")
-  cdffit <- logisitcfit(datasetone,cdffit$ro,cdffit$to,5,adjini=cdffit$adjust,daysrange=daysrange)
+  cdffitglobal <- logisitcfit(datasetone,-0.075,numdays,5)
+  lines(cdffitglobal$filterpdf,lty=1,col="red")
+  lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$adjust,lty=2,col="pink")
+  cdffit <- logisitcfit(datasetone,cdffitglobal$ro,cdffitglobal$to,5,adjini=cdffitglobal$adjust,daysrange=daysrange)
+#  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=5,col="green")
   daystopeak <- cdffit$to-lastobs
   if (daystopeak <= -5)
   {
     pstartday <- as.integer(max(1,lastobs - 1.25*daysWindow))
     pdaysrange <- c(pstartday:(lastobs))
-    cdffitn <- logisitcfit(datasetone,cdffit$ro,cdffit$to,2,cdffit$adjust,daysrange=pdaysrange)
+    daysrange <- pdaysrange
+    cdffitn <- logisitcfit(datasetone,cdffit$ro,cdffit$to,1.2*cdffit$adjust,cdffit$adjust,daysrange=pdaysrange)
     if (!inherits(cdffit, "try-error"))
     {
       cdffit <- cdffitn;
     }
   }
   lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=3,col="green")
-  legend("topright",
-         legend = c("New Fatalities","Lowess","Global Fit","Last Trend Fit"),
-         col = c(1,"red","pink","green"),
-         lty = c(NA,1,2,3),
-         lwd = c(1,1,1,1),
-         pch = c(1,NA,NA,NA),
-         cex=0.75)
+  
+  
+#  if (numdays ==  lastobs)
+#  {
+    datasetOptimist <- datasetone;
+    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
+    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
+    cdffit2 <- logisitcfit(datasetOptimist,cdffitglobal$ro,cdffitglobal$to,2,daysrange=daysrange)
+    if (!inherits(cdffit2, "try-error"))
+    {
+      lines(logisticpdf(c(1:length(datsetone)),cdffit2$ro,cdffit2$to)/cdffit2$adjust/maxgain,lty=4,col="blue")
+    }
+#}
+
+  
+  
+  legend("topleft",
+         legend = c("New Fatalities","Lowess","Global Fit","Last Trend Fit","Optimistic Trend Fit"),
+         col = c(1,"red","pink","green","blue"),
+         lty = c(NA,1,2,3,4),
+         lwd = c(1,1,1,1,1),
+         pch = c(1,NA,NA,NA,NA),
+         cex=0.85)
   
   datasetOptimist <- datasetone;
   athedates <- thedates[c(1:length(thedates)) %% 7 == 1]
   
   if (!inherits(cdffit, "try-error"))
   {
-    bootest <- bootstraplogisitcfit(datasetone[daysrange,],cdffit,n=1000)
+    bootest <- bootstraplogisitcfit(datasetone,cdffit,n=500,daysrange=daysrange)
     torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
 
     dayloc <- numeric()
@@ -367,15 +386,10 @@ for (cn in c(1:length(totaldeaths)))
     maxdayloc <- cdffit$to;
     maxloc <- 10*max(predictedTotalNewCases)
 
+
   if (numdays ==  lastobs)
   {
-    datasetOptimist <- datasetone;
-    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
-    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
-    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-    cdffit2 <- logisitcfit(datasetOptimist,-0.1,lastobs,2,daysrange = daysrange)
 
-    
     if (!inherits(cdffit2, "try-error"))
     {
 

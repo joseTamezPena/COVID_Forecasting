@@ -162,23 +162,24 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   return (models);
 }
 
-bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=1000)
+bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=500,daysrange=c(1:nrow(data)))
 {
   toestimations <- numeric(n);
   roestimations <- numeric(n);
   optGain <- ratiorange^(runif(n, -1,1));
-  data$newfatalities <- runmed(data$newfatalities,5) #remove extremes
 
   for (bsamples in 1:n)
   {
     toestimations[bsamples] <- inifit$to;
     roestimations[bsamples] <- inifit$ro
     bootresample <- sample(nrow(data),nrow(data),TRUE)
+    bootresample <- bootresample[order(bootresample)];
+#    print(bootresample)
     ndata <- data[bootresample,];
     maxgain <- min(0.9/max(ndata$fatalities),optGain[bsamples]);
     ndata$fatalities <- maxgain*ndata$fatalities;
     ndata$newfatalities <- maxgain*ndata$newfatalities;
-    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,inifit$adjust,inifit$adjust,lowf=0))
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.2*inifit$adjust,inifit$adjust,daysrange=daysrange))
     if (!inherits(nfit, "try-error"))
     {
       toestimations[bsamples] <- nfit$to;
