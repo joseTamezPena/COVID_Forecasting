@@ -44,7 +44,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   data$newfatalities <- adjini*data$newfatalities;
 #  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs(adjusto - adjust) > 0.0001) && (abs(log(accAdjust)) <= abs(log(gratio))))
+  while ((abs(adjusto - adjust) > 0.001) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
     adjusto <- adjust;
     loops <- loops + 1;
