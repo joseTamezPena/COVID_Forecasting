@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "4/28/2020"
+date: "5/6/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -140,7 +140,8 @@ covid19_datapopulation$ExpectedFatalities <- expectedtotalFatalities*covid19_dat
 
 time_covid19USPerc <- time_covid19US
 time_covid19USPerc <- time_covid19US/covid19_datapopulation[rownames(time_covid19US),"ExpectedFatalities"]
-
+time_covid19US <- time_covid19US[complete.cases(time_covid19USPerc),]
+time_covid19USPerc <- time_covid19USPerc[complete.cases(time_covid19USPerc),]
 
 expfatalities <- covid19_datapopulation$ExpectedFatalities
 names(expfatalities) <- rownames(covid19_datapopulation)
@@ -192,11 +193,11 @@ source('./logfunctions.r')
 
 ## Estimating the peaks
 
-```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 2.5, fig.width= 7.0}
 
 par(op)
-cn = 1
-par(mfrow=c(2,2),cex=0.35,mar=c(6,4,4,5))
+cn = 35
+par(mfrow=c(1,2),cex=0.35,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
   thepeakdates <- character(6);
@@ -211,45 +212,78 @@ for (cn in c(1:length(totaldeaths)))
   thedates <- as.Date(str_replace(thedates,"0020-","2020-"))
 
   datsetone <- datsetone[datsetone > 0.0]
-  datsetchangep <- c(datsetone[1],datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)])
+  
+
+  
   lastobs <- length(datsetone)
-  datsetchangen <- c(datsetone[2:length(datsetone)]-datsetone[1:(length(datsetone)-1)],datsetchangep[lastobs])
-  datsetchange <- 0.5*(datsetchangep + datsetchangen)
-  datsetchange[1:(length(datsetone)-1)] <- runmed(datsetchange,5)[1:(length(datsetone)-1)];
+  datsetchange <- c(datsetone[1],datsetone[2:lastobs]-datsetone[1:(lastobs-1)])
+  datsetchange[datsetchange < 0] <- 0;
+  plot(datsetchange,main=paste("New Deaths:",mainName),xlab="Days since deaths>0",ylab="Fraction of expected deaths")
 
-  datasetone <- as.data.frame(cbind(days=c(1:length(datsetone)),fatalities = datsetone,newfatalities = datsetchange))
+  datasetone <- as.data.frame(cbind(days=c(1:lastobs),fatalities = datsetone,newfatalities = datsetchange))
 
-  lastobs <- nrow(datasetone) - 1;
+  
+#  lastobs <- nrow(datasetone) - 1;
   numdays <- min(lastobs,which.max(datasetone$newfatalities)+7)
 
   startday <- max(1,(numdays - daysWindow))
   daysrange <- c(startday:(lastobs))
   
-  cdffit <- logisitcfit(datasetone[daysrange,],-0.1,numdays,10)
+  cdffitglobal <- logisitcfit(datasetone,-0.075,numdays,5)
+  lines(cdffitglobal$filterpdf,lty=1,col="red")
+  lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$adjust,lty=2,col="pink")
+  cdffit <- logisitcfit(datasetone,cdffitglobal$ro,cdffitglobal$to,5,adjini=cdffitglobal$adjust,daysrange=daysrange)
+#  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=5,col="green")
   daystopeak <- cdffit$to-lastobs
-  if (daystopeak <= 1)
+  if (daystopeak <= -5)
   {
-    pstartday <- max(1,lastobs - 1.25*daysWindow)
-#    pstartday <- max(1,lastobs - daysWindow)
+    pstartday <- as.integer(max(1,lastobs - 1.25*daysWindow))
     pdaysrange <- c(pstartday:(lastobs))
-    cdffit <- logisitcfit(datasetone[pdaysrange,],cdffit$ro,cdffit$to,2,cdffit$adjust)
+    daysrange <- pdaysrange
+    cdffitn <- logisitcfit(datasetone,cdffit$ro,cdffit$to,1.2*cdffit$adjust,cdffit$adjust,daysrange=pdaysrange)
+    if (!inherits(cdffit, "try-error"))
+    {
+      cdffit <- cdffitn;
+    }
   }
+  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=3,col="green")
+  
+  
+#  if (numdays ==  lastobs)
+#  {
+    datasetOptimist <- datasetone;
+    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
+    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
+    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
+    cdffit2 <- logisitcfit(datasetOptimist,cdffitglobal$ro,cdffitglobal$to,2,daysrange=daysrange)
+    if (!inherits(cdffit2, "try-error"))
+    {
+      lines(logisticpdf(c(1:length(datsetone)),cdffit2$ro,cdffit2$to)/cdffit2$adjust/maxgain,lty=4,col="blue")
+    }
+#}
+
+  
+  
+  legend("topleft",
+         legend = c("New Fatalities","Lowess","Global Fit","Last Trend Fit","Optimistic Trend Fit"),
+         col = c(1,"red","pink","green","blue"),
+         lty = c(NA,1,2,3,4),
+         lwd = c(1,1,1,1,1),
+         pch = c(1,NA,NA,NA,NA),
+         cex=0.85)
   
   datasetOptimist <- datasetone;
-
   athedates <- thedates[c(1:length(thedates)) %% 7 == 1]
   
-
   if (!inherits(cdffit, "try-error"))
   {
-    bootest <- bootstraplogisitcfit(datasetone[daysrange,],cdffit,n=100)
+    bootest <- bootstraplogisitcfit(datasetone,cdffit,n=500,daysrange=daysrange)
     torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
 
-    
     dayloc <- numeric()
     maxdayloc <- numeric()
     maxloc <- numeric()
-    predictedTotalCases <- logisticcdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+    predictedTotalCases <- logisticcdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$adjust;
     ymax <- max(1,max(predictedTotalCases))
     names(predictedTotalCases) <- thedates
 
@@ -262,10 +296,10 @@ for (cn in c(1:length(totaldeaths)))
          xaxt="none",
          xlab="",
          main=mainName)
-    lines(datasetone$days[c(1:lastobs)],datasetone$fatalities[c(1:lastobs)],lwd=5)
-    lines(datasetone$days[c(1:lastobs)],10*datasetone$newfatalities[c(1:lastobs)],lty=3,lwd=4,col=2)
+    lines(datasetone$days[c(1:lastobs)],datasetone$fatalities[c(1:lastobs)],lwd=3)
+    lines(datasetone$days[c(1:lastobs)],10*datasetone$newfatalities[c(1:lastobs)],lty=3,lwd=3,col=2)
 
-    predictedTotalNewCases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust
+    predictedTotalNewCases <- logisticpdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$adjust
     lines(10*predictedTotalNewCases,lty=4,col="red")
     dmax <- which.max(predictedTotalNewCases)
     peakloc <- dmax
@@ -274,6 +308,7 @@ for (cn in c(1:length(totaldeaths)))
     if (daystopeak <= 0)
     {
       dmax <- min(which.max(datsetchange),cdffit$to)
+#      daystopeak <- min(which.max(datsetchange),cdffit$to)-lastobs;
       daystopeak <- min(cdffit$to,which.max(datasetone$newfatalities))-lastobs;
     }
 
@@ -314,21 +349,16 @@ for (cn in c(1:length(totaldeaths)))
     maxdayloc <- cdffit$to;
     maxloc <- 10*max(predictedTotalNewCases)
 
+
   if (numdays ==  lastobs)
   {
-    datasetOptimist <- datasetone;
-    maxgain <- min(0.9/max(datasetOptimist$fatalities),optGain);
-    datasetOptimist$fatalities <- maxgain*datasetOptimist$fatalities;
-    datasetOptimist$newfatalities <- maxgain*datasetOptimist$newfatalities;
-    cdffit2 <- logisitcfit(datasetOptimist[daysrange,],-0.1,lastobs,2)
 
-    
     if (!inherits(cdffit2, "try-error"))
     {
 
-      predictedTotalNewCases <- logisticpdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
+      predictedTotalNewCases <- logisticpdf(c(1:180),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
       
-      predictedTotalCases <- logisticcdf(c(1:120),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
+      predictedTotalCases <- logisticcdf(c(1:180),cdffit2$ro,cdffit2$to)/cdffit2$adjust;
       lines(predictedTotalCases/maxgain,lty=5,lwd=2,col="pink")
   
       expfat <- covid19_datapopulation[names(totaldeaths[usNumber]),
@@ -341,14 +371,14 @@ for (cn in c(1:length(totaldeaths)))
       
       lines(10*predictedTotalNewCases/maxgain,lty=5,lwd=2,col="pink")
       dmax <- which.max(predictedTotalNewCases)
-      daystopeak <- cdffit2$to-lastobs;
+      daystopeak2 <- cdffit2$to-lastobs;
       text(dmax - 12,
            0.95,
-           paste("Optimistic peak:",sprintf("%3.0f",daystopeak)),
+           paste("Optimistic peak:",sprintf("%3.0f",daystopeak2)),
            cex=0.8,
            col="pink")
       abline(v=dmax,col="pink")
-      peakdate <- c(peakdate,thedates[lastobs] + as.integer(daystopeak+0.5))
+      peakdate <- c(peakdate,thedates[lastobs] + as.integer(daystopeak2+0.5))
       peakloc <- c(peakloc,dmax)
       bootest <- bootstraplogisitcfit(datasetOptimist[daysrange,],cdffit2)
       torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
@@ -378,11 +408,11 @@ for (cn in c(1:length(totaldeaths)))
       if (ndays > 7)
       {
         startday <- max(1,ndays - daysWindow)
-        daysrange <- c(startday:ndays)
-        cdffit <- logisitcfit(datasetone[daysrange,],-0.1,ndays,10)  
+        daysrange <- as.integer(c(startday:ndays))
+        cdffit <- logisitcfit(datasetone,-0.1,ndays,5,daysrange = daysrange)  
         if (!inherits(cdffit, "try-error"))
         {
-          newcases <- logisticpdf(c(1:120),cdffit$ro,cdffit$to)/cdffit$adjust;
+          newcases <- logisticpdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$adjust;
           dayloc <- c(dayloc,ndays)
           maxdayloc <- c(maxdayloc,cdffit$to)
           maxloc <- c(maxloc,10*max(newcases))
@@ -401,8 +431,8 @@ for (cn in c(1:length(totaldeaths)))
     }
     points(dayloc,maxloc,col="gray")
     points(maxdayloc,rep(0,length(maxdayloc)),
-           pch = 17,col=c("purple","pink",rep("purple",max(1,length(maxdayloc)-2))),
-           cex=c(2.5,2.0,2.0,1.5,1.5,rep(1,max(1,length(maxdayloc)-5))))
+           pch = 17,col=c("purple","pink",rep("purple",length(maxdayloc)-2)),
+           cex=c(2.5,2.0,2.0,1.5,1.5,rep(1,length(maxdayloc)-5)))
   }
   else
   {
@@ -421,13 +451,13 @@ for (cn in c(1:length(totaldeaths)))
          legend = c("Total Estimated","Total Observed","New Observed","Flattening Trend","Peaks Estimations",thepeakdates),
          col = c(1,1,2,"gray","purple",2,"pink",3,4,5,6),
          lty = c(2,1,3,3,NA,4,5,6,6,6,6),
-         lwd = c(1,5,4,3,1,2,1,1,1,1,1),
+         lwd = c(1,3,3,3,1,2,1,1,1,1,1),
          pch = c(NA,NA,NA,NA,17,NA,NA,NA,NA,NA,NA),
          cex=0.75)
   z <- c(0:10)/100;
   axis(4, at=10*z,labels=round(z,digits=2),
   col.axis="blue", las=2, cex.axis=0.7, tck=-.01)
-  mtext("New Fatalities as Fraction of Total Expected", cex=0.35,side=4, line=3, cex.lab=0.3, col="black",las=3)
+  mtext("New Fatalities as Fraction of Total Expected", cex=0.35,side=4, line=3, cex.lab=0.2, col="black",las=3)
 
 }
 

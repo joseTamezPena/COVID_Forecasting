@@ -16,16 +16,16 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   if (lowf > 0)
   {
     data <- data[c(1:lastObs),];
-    data$fatalities <- lowess(data$fatalities[c(1:lastObs)],f=lowf)$y;
+    data$fatalities <- supsmu(c(1:lastObs),data$fatalities[c(1:lastObs)])$y;
     data$newfatalities <- 0.25*data$newfatalities[c(1:lastObs)] + 0.75*c(data$newfatalities[1],(data$fatalities[2:lastObs]-data$fatalities[1:lastObs-1]));
     data$newfatalities <- runmed(data$newfatalities,5)
-    data$newfatalities <- lowess(data$newfatalities,f=lowf)$y
+    data$newfatalities <- supsmu(c(1:lastObs),data$newfatalities)$y
   }
 #  print(daysrange)
-  data <- data[daysrange,];
-  lastObs <- nrow(data);
   filterCDF <- data$fatalities;
   filtercdf <- data$newfatalities;
+  data <- data[daysrange,];
+  lastObs <- nrow(data);
   cdfestimate <- NULL;
   pdfestimate <- NULL;
   firscdftestimation <- cdfestimate;
@@ -38,15 +38,15 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   loops <- 0;
   defecitRatio <- 1.0;
   accAdjust <- adjini;
-  error <- FALSE;
+  error <- TRUE;
 
   data$fatalities <- adjini*data$fatalities;
   data$newfatalities <- adjini*data$newfatalities;
 #  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs(adjusto - adjust) > 0.01) && (abs(log(accAdjust)) <= abs(log(gratio))))
+  while ((abs(adjusto - adjust) > 0.0001) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
-    adjusto <- 1.0;
+    adjusto <- adjust;
     loops <- loops + 1;
     pLeft <- 1.0-data$fatalities[lastObs];
     if (data$fatalities[lastObs] > 0.5) 
@@ -64,6 +64,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
       smo <- try(summary(cdfestimate))
       if (!inherits(smo, "try-error"))
       {
+        error <- FALSE;
         fro = smo$coefficients[1,1];
         fto = smo$coefficients[2,1];
         if (fto < 0.5*to)
@@ -85,8 +86,8 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
           psmo <- try(summary(pdfestimate))
           if (!inherits(psmo, "try-error"))
           {
-            fro = psmo$coefficients[1,1];
-            fto = psmo$coefficients[2,1];
+            fro = 0.4*fro+0.6*psmo$coefficients[1,1];
+            fto = 0.4*fto+0.6*psmo$coefficients[2,1];
             if (fto < 0.5*to)
             {
               fto <- to;
@@ -96,15 +97,14 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
               fto <- to;
             }
             nleft <- 1.0-logisticcdf(data$days[lastObs], fro, fto);
-            adjust <- (0.5 + pLeft)/(0.5 + nleft);
             if (data$fatalities[lastObs] > 0.5) 
             {
               nleft <- 1.0 - nleft;
-              adjust <- (0.25 + nleft)/(0.25 + pLeft);
+              adjust <- (0.01 + nleft)/(0.01 + pLeft);
             }
             else
             {
-              adjust <- (0.25 + pLeft)/(0.25 + nleft);
+              adjust <- (0.01 + pLeft)/(0.01 + nleft);
             }
             if (adjust > 1.2)
             {
@@ -117,20 +117,12 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
             accAdjust <- accAdjust*adjust;
             data$fatalities <- adjust*data$fatalities;
             data$newfatalities <- adjust*data$newfatalities;
- #                 cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+#            cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,abs(adjusto - adjust),fro,fto),"\n")
           }
         }
       }
-      else
-      {
-        error <- TRUE;
-      }
     }
-    else
-    {
-      error <- TRUE;
-    }
-    if (loops > 1000)
+    if (loops > 100)
     {
       adjusto <- adjust
     }
@@ -144,13 +136,13 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   {
     defecitRatio <- logisticcdf(data$days[lastObs], fro, fto)/opLeft;
   }
-#    cat(sprintf("Defecit= %5.3f, ro= %8.3f to=%8.3f",defecitRatio,fro,fto),"\n")
+#  cat(sprintf("Defecit= %5.3f, ro= %8.3f to=%8.3f",defecitRatio,fro,fto),"\n")
   
   models <- list(CDF=cdfestimate,
                  pdf=pdfestimate,
                  ro=fro,
                  to=fto,
-                 firstpdf = firscdftestimation,
+                 firstcdf = firscdftestimation,
                  firstpdf = firspdftestimation,
                  defecitRatio=defecitRatio,
                  adjust = accAdjust,
@@ -162,7 +154,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   return (models);
 }
 
-bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=500,daysrange=c(1:nrow(data)))
+bootstraplogisitcfit <- function(data,inifit,ratiorange=2.0,n=500,daysrange=c(1:nrow(data)))
 {
   toestimations <- numeric(n);
   roestimations <- numeric(n);
@@ -172,14 +164,15 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=1.25,n=500,daysrange=c(1
   {
     toestimations[bsamples] <- inifit$to;
     roestimations[bsamples] <- inifit$ro
-    bootresample <- sample(nrow(data),nrow(data),TRUE)
-    bootresample <- bootresample[order(bootresample)];
+#    bootresample <- sample(nrow(data),nrow(data),TRUE)
+#    bootresample <- bootresample[order(bootresample)];
 #    print(bootresample)
-    ndata <- data[bootresample,];
-    maxgain <- min(0.9/max(ndata$fatalities),optGain[bsamples]);
+#    ndata <- data[bootresample,];
+    ndata <- data;
+    maxgain <- min(2.0/max(ndata$fatalities),optGain[bsamples]);
     ndata$fatalities <- maxgain*ndata$fatalities;
     ndata$newfatalities <- maxgain*ndata$newfatalities;
-    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.2*inifit$adjust,inifit$adjust,daysrange=daysrange))
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,2*inifit$defecitRatio,inifit$defecitRatio,daysrange=daysrange))
     if (!inherits(nfit, "try-error"))
     {
       toestimations[bsamples] <- nfit$to;
