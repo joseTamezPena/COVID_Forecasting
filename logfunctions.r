@@ -154,7 +154,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   return (models);
 }
 
-bootstraplogisitcfit <- function(data,inifit,ratiorange=2.0,n=500,daysrange=c(1:nrow(data)))
+bootstraplogisitcfit <- function(data,inifit,ratiorange=1.5,n=500,daysrange=c(1:nrow(data)))
 {
   toestimations <- numeric(n);
   roestimations <- numeric(n);
@@ -172,7 +172,9 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=2.0,n=500,daysrange=c(1:
     maxgain <- min(2.0/max(ndata$fatalities),optGain[bsamples]);
     ndata$fatalities <- maxgain*ndata$fatalities;
     ndata$newfatalities <- maxgain*ndata$newfatalities;
-    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,2*inifit$defecitRatio,inifit$defecitRatio,daysrange=daysrange))
+    iniadjs <- 0.7+0.3*inifit$defecitRatio;
+#    iniadjs <- 1.0;
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.2*inifit$defecitRatio,iniadjs,daysrange=daysrange))
     if (!inherits(nfit, "try-error"))
     {
       toestimations[bsamples] <- nfit$to;

@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "5/8/2020"
+date: "5/10/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -385,21 +385,21 @@ for (cn in c(1:length(totaldeaths)))
         
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*
       logisticcdf(10000,cdffit$ro,cdffit$to)/cdffit$defecitRatio;
-    text(90,0.55,
+    text(90,0.75,
          paste("Current Deaths:", sprintf("%3.0f",max(time_covid19Country[names(totaldeaths[countryNumber]),]))),
          cex=0.8)
-    text(90,0.5,
+    text(90,0.7,
          paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
          cex=0.8)
     
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)
     expfat <- max(expfat,datsetchange)
-    text(90,0.45,
+    text(90,0.65,
          paste("Maximum Deaths per Day:", sprintf("%3.0f",expfat)),
          cex=0.8)
     firstdate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[1]+0.5),"%a %b %d, %y"))
     finaldate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[3]+0.5),"%a %b %d, %y"))
-    text(90,0.40,
+    text(90,0.60,
          paste("Peak Between:",firstdate,"and",finaldate),
          cex=0.8)
     dayloc <- lastobs;
@@ -425,7 +425,7 @@ for (cn in c(1:length(totaldeaths)))
       expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),
                                        "ExpectedFatalities"]*
         logisticcdf(10000,cdffit2$ro,cdffit2$to)/cdffit2$defecitRatio/maxgain;
-      text(90,0.35,
+      text(90,0.55,
            paste("Optimistic Deaths:", sprintf("%3.0f",expfat)),
            cex=0.8)
       
@@ -446,7 +446,7 @@ for (cn in c(1:length(totaldeaths)))
       daystopeakrange <- torange-lastobs;
       firstdate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[1]+0.5),"%a %b %d, %y"))
       finaldate <- as.character(format(thedates[lastobs] + as.integer(daystopeakrange[3]+0.5),"%a %b %d, %y"))
-      text(90,0.30,
+      text(90,0.50,
            paste("Peak Between:",firstdate,"and",finaldate),
            cex=0.8)
     }
