@@ -44,7 +44,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   data$newfatalities <- adjini*data$newfatalities;
 #  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs(adjusto - adjust) > 0.001) && (abs(log(accAdjust)) <= abs(log(gratio))))
+  while ((abs(adjusto - adjust) > 0.0005) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
     adjusto <- adjust;
     loops <- loops + 1;
@@ -117,7 +117,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
             accAdjust <- accAdjust*adjust;
             data$fatalities <- adjust*data$fatalities;
             data$newfatalities <- adjust*data$newfatalities;
-#            cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,abs(adjusto - adjust),fro,fto),"\n")
+#            cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
           }
         }
       }

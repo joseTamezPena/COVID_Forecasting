@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "5/10/2020"
+date: "5/16/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -240,7 +240,7 @@ source('./logfunctions.r')
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 2.5, fig.width= 7.0}
 
 par(op)
-cn = 13
+cn = 16
 par(mfrow=c(1,2),cex=0.35,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
@@ -267,7 +267,7 @@ for (cn in c(1:length(totaldeaths)))
   
 #  lastobs <- nrow(datasetone) - 1;
   numdays <- min(lastobs,which.max(datasetone$newfatalities)+7)
-  if (numdays < lastobs)
+  if (numdays < (lastobs-7))
   {
     if (max(datasetone$fatalities) < 0.1)
     {

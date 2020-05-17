@@ -25,8 +25,11 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     
     daysrange <- c(1:lastday)
     cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,lastobs,3,daysrange=daysrange)
-    daysrange <- c((lastday-17):lastday)
-    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
+    daysrange <- c((lastday - 17):lastday)
+    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
+#    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
+    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.5*adjsini,adjini=adjsini,daysrange=daysrange)
+    #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
     
     hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio
     plot(hostCDFIT,
@@ -47,7 +50,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     lines(10*pdfpredictions,lty=2,col="blue")
     atpeak <- as.integer(cdffit$to+0.5)
     
-    abline(v=atpeak,col="red",lty=2)
+    abline(v=atpeak,col="pink",lty=2)
     maxhostpital <- startDate + atpeak
     
     text(1,0.75,
@@ -63,12 +66,12 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
          pos=4,
          cex=0.5)
     text(1,0.65,
-         paste("Pico de nuevos",feature,":",sprintf("%5.0f",max(pdfpredictions*totalEsperado))),
+         paste("Pico dia de nuevas",feature,":",sprintf("%5.0f",max(pdfpredictions*totalEsperado))),
          pos=4,
          cex=0.5)
 
     text(1,0.60,
-         paste("Total semana pico",feature,":",sprintf("%5.0f",sum(pdfpredictions[(atpeak-7):atpeak])*totalEsperado)),
+         paste("Pico semana ",feature,":",sprintf("%5.0f",sum(pdfpredictions[(atpeak-3):(atpeak+3)])*totalEsperado)),
          pos=4,
          cex=0.5)
     
@@ -84,10 +87,10 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     axis(1,at=c(1:length(dateAxis)),labels=dateAxis,las=2,cex.axis=0.4)
     
     legend("topright",
-           legend = c("Total Estimado","Total Observado","Datos utilizados","Ingreso por día"),
-           col = c(1,"gray","red","blue"),
-           lty = c(2,1,1,2),
-           lwd = c(1,3,1,1),
+           legend = c("Total Estimado","Total Observado","Datos utilizados","Ingreso por día","linea de pico"),
+           col = c(1,"gray","red","blue","pink"),
+           lty = c(2,1,1,2,2),
+           lwd = c(1,3,1,1,1),
            cex=0.5)
     
     z <- c(0:10)/100;

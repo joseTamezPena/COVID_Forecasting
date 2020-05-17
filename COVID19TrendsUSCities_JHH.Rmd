@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "5/6/2020"
+date: "5/16/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -46,7 +46,7 @@ The prediction based on a simple logistic model and:
 For US locations here is the basic assumption:
 70% of SARS-CoV-2 exposure  
 20% Infection efficacy i.e. 20% of the exposure subjects turns into a Covid-19 case  
-2.5% of Mortality  
+2.0% of Mortality  
 
 I will estimate the death rates based on current trends fitted to the logistic function.  
 The last 14 days will be used for the peak estimations.
@@ -54,20 +54,20 @@ Peak estimations will be done using:
 
 If the data has not reached the peak the plots will show estimations based on:  
 
-1) The last reported 14 observations  
-2) 14 observations from the last week  
-3) 14 observations ending two weeks ago   
-4) 14 observations ending three weeks ago  
-5) 14 observations ending four weeks ago  
+1) The last reported 17 observations  
+2) 17 observations from the last week  
+3) 17 observations ending two weeks ago   
+4) 17 observations ending three weeks ago  
+5) 17 observations ending four weeks ago  
 
 
 If the data reached the peak the plots will show:  
 
 1) all the points after one week before the peak   
-2) 14 observations before one week prior the peak   
-3) 14 observations ending two weeks prior the peak    
-4) 14 observations ending three weeks prior the peak  
-5) 14 observations ending four weeks prior the peak    
+2) 17 observations before one week prior the peak   
+3) 17 observations ending two weeks prior the peak    
+4) 17 observations ending three weeks prior the peak  
+5) 17 observations ending four weeks prior the peak    
 
 The flattening of the curve will be plotted as a grey line. It represents the maximum expected number of deaths at that specified date. If the maximum number of deaths is going down future looks good!
 
@@ -93,10 +93,10 @@ https://github.com/joseTamezPena/COVID_Forecasting
 ```{r parameters}
 # The expetec %  of deaths in each City
 
-expectedtotalFatalities = 0.70*0.20*0.025
+expectedtotalFatalities = 0.70*0.20*0.02
 optGain <- 3
 # The number of observations used for the trends
-daysWindow <- 14
+daysWindow <- 17
 
 today <- Sys.Date()
 
