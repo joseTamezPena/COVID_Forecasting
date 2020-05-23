@@ -7,28 +7,32 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     datasetperc <- as.data.frame(cbind(days=c(1:lastobs),fatalities = dataPerc,newfatalities = datsetchange))
     
     startDate <- as.Date(startDate)
-#    print(startDate)
+    lastDataobs <- startDate + lastobs - 1;
+    mindaytoinclude <- lastDataobs - 14;
+    mindaytoinclude <- as.numeric(mindaytoinclude - startDate) + 1
+    print(mindaytoinclude)
+    #    print(startDate)
     maxplotdata <- 3*lastobs;
     dateAxis <- c(startDate,startDate+1,c((startDate+1):(startDate - 1 + maxplotdata)))
 #    print(dateAxis)
     
     mxchange <- 0.8*max(datsetchange);
     lastday <- as.integer(mean(c(1:lastobs)[(datsetchange > mxchange)]) + 0.5) - 3;
-#    print(c(lastobs,lastday))
-    if (lastday < (lastobs - 14))
+    print(c(lastobs,lastday))
+    if (lastday < mindaytoinclude)
     {
 #      print(c(lastobs,lastday,lastobs-lastday))
-      lastday <- (lastobs - 14)
+      lastday <- mindaytoinclude
     }
     print(c(lastobs,lastday,lastobs-lastday))
   #    print(lastday)
     
     daysrange <- c(1:lastday)
-    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,lastobs,3,daysrange=daysrange)
-    daysrange <- c((lastday - 17):lastday)
+    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,lastobs,2,daysrange=daysrange)
+    daysrange <- c((lastday - 21):lastday)
     adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
 #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
-    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.5*adjsini,adjini=adjsini,daysrange=daysrange)
+    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.25*adjsini,adjini=adjsini,daysrange=daysrange)
     #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
     
     hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio
