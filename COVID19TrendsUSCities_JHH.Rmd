@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "5/22/2020"
+date: "5/23/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -45,8 +45,8 @@ The prediction based on a simple logistic model and:
 
 For US locations here is the basic assumption:
 70% of SARS-CoV-2 exposure  
-20% Infection efficacy i.e. 20% of the exposure subjects turns into a Covid-19 case  
-2.0% of Mortality  
+10% Infection efficacy i.e. 10% of the exposure subjects turns into a Covid-19 case  
+4.0% of Mortality  
 
 I will estimate the death rates based on current trends fitted to the logistic function.  
 The last 17 days will be used for the peak estimations.
@@ -93,7 +93,7 @@ https://github.com/joseTamezPena/COVID_Forecasting
 ```{r parameters}
 # The expetec %  of deaths in each City
 
-expectedtotalFatalities = 0.70*0.20*0.02
+expectedtotalFatalities = 0.70*0.10*0.04
 optGain <- 3
 # The number of observations used for the trends
 daysWindow <- 17

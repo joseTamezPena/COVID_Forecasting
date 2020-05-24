@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "5/22/2020"
+date: "5/23/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -45,9 +45,9 @@ The prediction based on a simple logistic model and:
 
 70% of SARS-CoV-2 exposure  
 10% Infection efficacy i.e. 10% of the exposure subjects turns into a Covid-19 case  
-1% of Mortality  
+4.0% of Mortality  
 
-For each country we will use the urban population  
+For each country we will use the 100% urban populationand 30% of the rural population
 
 I will estimate the death rates based on current trends fitted to the logistic function.  
 The last 17 days will be used for the peak estimations.
@@ -78,6 +78,11 @@ I am also providing optimistic models. I´m assuming that the # of fatalities ar
 
 
 =====================================================================================  
+
+5/23/2020 Update:  
+
+I''m getting ready for the second wave. 
+So I have to adjust the mortality rate: From 1.0% to 4.0% based on NYC data
 
 5/8/2020 Update:  
 
@@ -112,7 +117,7 @@ https://github.com/joseTamezPena/COVID_Forecasting
 ```{r parameters}
 # The expetec %  of deaths in each country
 
-expectedtotalFatalities = 0.70*0.1*0.01
+expectedtotalFatalities = 0.70*0.1*0.04
 optGain <- 3
 # The number of observations used for the trends
 daysWindow <- 17
@@ -263,13 +268,15 @@ for (cn in c(1:length(totaldeaths)))
   datsetchange[datsetchange < 0] <- 0;
 
   datasetone <- as.data.frame(cbind(days=c(1:lastobs),fatalities = datsetone,newfatalities = datsetchange))
+  filteredNewFatalities <-  runmed(datasetone$newfatalities,5)
+  
 
   
 #  lastobs <- nrow(datasetone) - 1;
-  numdays <- min(lastobs,which.max(datasetone$newfatalities)+7)
+  numdays <- min(lastobs,which.max(filteredNewFatalities)+7)
   if (numdays < (lastobs-7))
   {
-    if (max(datasetone$fatalities) < 0.1)
+    if (max(datasetone$fatalities) < 0.3)
     {
       gain <- 0.25/max(datasetone$fatalities);
       datasetone$fatalities <- gain*datasetone$fatalities;
