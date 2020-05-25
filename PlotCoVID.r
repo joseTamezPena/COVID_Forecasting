@@ -51,7 +51,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     lines(dataPerc,lty=1,col="gray",lwd=3)
     lines(cdffitglobal$filterCDF,lty=1,col="red")
     pdfpredictions <- logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio;
-    lines(10*pdfpredictions,lty=2,col="blue")
+    lines(30*pdfpredictions,lty=2,col="blue")
     atpeak <- as.integer(cdffit$to+0.5)
     
     abline(v=atpeak,col="pink",lty=2)
@@ -98,7 +98,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
            cex=0.5)
     
     z <- c(0:10)/100;
-    axis(4, at=10*z,labels=round(z,digits=2),
+    axis(4, at=30*z,labels=round(z,digits=2),
          col.axis="blue", las=2, cex.axis=0.6, tck=-.01)
     mtext("Fracción de casos nuevos", cex=0.30,side=4, line=3, cex.lab=0.2, col="black",las=3)
     
