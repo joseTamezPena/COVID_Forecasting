@@ -5,11 +5,23 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     lastobs <- length(dataPerc)
     datsetchange <- c(dataPerc[1],dataPerc[2:lastobs]-dataPerc[1:(lastobs-1)])
     datasetperc <- as.data.frame(cbind(days=c(1:lastobs),fatalities = dataPerc,newfatalities = datsetchange))
+
+    colorcode <- rep("gray",lastobs);
+    colorcode[1:(lastobs-14)] <- "Black";
+    plot(datsetchange*totalEsperado,col=colorcode,
+         main=mainName,
+         xlab="Día desde primer evento",
+         ylab="Eventos Observados",
+         cex.axis=0.75,
+         cex.lab=0.65
+    );
     
+    mindaytoincludeID <- which.max(datsetchange);
+        
     startDate <- as.Date(startDate)
     lastDataobs <- startDate + lastobs - 1;
     mindaytoinclude <- lastDataobs - 14;
-    mindaytoinclude <- as.numeric(mindaytoinclude - startDate) + 1
+    mindaytoinclude <- max(mindaytoincludeID,as.numeric(mindaytoinclude - startDate) + 1);
     print(mindaytoinclude)
     #    print(startDate)
     maxplotdata <- 3*lastobs;
@@ -28,14 +40,33 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
   #    print(lastday)
     
     daysrange <- c(1:lastday)
-    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,lastobs,2,daysrange=daysrange)
-    daysrange <- c((lastday - 21):lastday)
-    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
-#    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
-    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.25*adjsini,adjini=adjsini,daysrange=daysrange)
-    #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
+    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,lastobs,1.5,daysrange=daysrange)
+#    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
+#    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
     
-    hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio
+    daysrange <- c((lastday - 17):lastday)
+    cat(cdffitglobal$adjust,"\n")
+    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
+    cat(adjsini,"\n")
+#    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
+    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
+    #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
+    cat(cdffit$adjust,"\n")
+    
+    lines(cdffitglobal$filterpdf*totalEsperado,lty=1,col="red",lwd=3)
+    lines(logisticpdf(c(1:maxplotdata),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$defecitRatio*totalEsperado,lty=5,col="blue",lwd=1)    
+    lines(logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio*totalEsperado,lty=3,col="green",lwd=3)    
+    
+    legend("topleft",
+           legend = c("Observado","Suavizado","Global Estimation","Last 17 Days"),
+           col = c(1,"red","blue","green"),
+           pch = c(1,NA,NA,NA),
+           lty = c(NA,1,5,3),
+           lwd = c(NA,3,1,3),
+           cex=0.5)
+    
+        hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio
+#    hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)
     plot(hostCDFIT,
          ylim=c(0,1),
          type="l",
@@ -53,12 +84,12 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     pdfpredictions <- logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio;
     lines(30*pdfpredictions,lty=2,col="blue")
     atpeak <- as.integer(cdffit$to+0.5)
-    
+    estimadoActual <- totalEsperado*sum(pdfpredictions[1:lastobs]);
     abline(v=atpeak,col="pink",lty=2)
     maxhostpital <- startDate + atpeak
     
     text(1,0.75,
-         paste("Total de",feature,":",sprintf("%6.0f",max(data))),
+         paste("Total de",feature,":",sprintf("Reportado: %6.0f, Estimado: %6.0f",max(data),estimadoActual)),
          pos=4,
          cex=0.5)
     text(1,0.70,
@@ -101,6 +132,8 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     axis(4, at=30*z,labels=round(z,digits=2),
          col.axis="blue", las=2, cex.axis=0.6, tck=-.01)
     mtext("Fracción de casos nuevos", cex=0.30,side=4, line=3, cex.lab=0.2, col="black",las=3)
+    result <- list(name=mainName,daysRange=daystopeakrange,peak=max(pdfpredictions*totalEsperado))
+    return (result)
     
     
 }

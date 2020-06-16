@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "5/23/2020"
+date: "6/13/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -430,9 +430,12 @@ for (cn in c(1:length(totaldeaths)))
       lines(fit2,lty=3,lwd=3,col="gray")
     }
     points(dayloc,maxloc,col="gray")
-    points(maxdayloc,rep(0,length(maxdayloc)),
+    if (length(maxdayloc)>2)
+    {
+      points(maxdayloc,rep(0,length(maxdayloc)),
            pch = 17,col=c("purple","pink",rep("purple",length(maxdayloc)-2)),
            cex=c(2.5,2.0,2.0,1.5,1.5,rep(1,length(maxdayloc)-5)))
+    }
   }
   else
   {

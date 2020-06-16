@@ -13,13 +13,14 @@ logisticpdf <- function(days,ro,to)
 logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow(data)))
 {
   lastObs <- daysrange[length(daysrange)];
+#  cat(lastObs,":")
   if (lowf > 0)
   {
     data <- data[c(1:lastObs),];
     data$fatalities <- supsmu(c(1:lastObs),data$fatalities[c(1:lastObs)])$y;
     data$newfatalities <- 0.25*data$newfatalities[c(1:lastObs)] + 0.75*c(data$newfatalities[1],(data$fatalities[2:lastObs]-data$fatalities[1:lastObs-1]));
     data$newfatalities <- runmed(data$newfatalities,5)
-    data$newfatalities <- supsmu(c(1:lastObs),data$newfatalities)$y
+    data$newfatalities <- supsmu(c(1:lastObs),data$newfatalities[c(1:lastObs)])$y
   }
 #  print(daysrange)
   filterCDF <- data$fatalities;
@@ -44,16 +45,16 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   data$newfatalities <- adjini*data$newfatalities;
 #  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs(adjusto - adjust) > 0.0005) && (abs(log(accAdjust)) <= abs(log(gratio))))
+  while ((abs((adjusto - accAdjust)/accAdjust) > 0.025) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
-    adjusto <- adjust;
     loops <- loops + 1;
     pLeft <- 1.0-data$fatalities[lastObs];
     if (data$fatalities[lastObs] > 0.5) 
     {
       pLeft <- 1.0 - pLeft;
     }
-#    cat(sprintf("pLeft= %5.3f, ro= %8.3f to=%8.3f",pLeft,fro,fto),"\n")
+#    cat(sprintf("%8.5f : pLeft= %5.3f, ro= %8.3f to=%8.3f",abs((adjusto - accAdjust)/accAdjust),pLeft,fro,fto),"\n")
+    adjusto <- accAdjust;
     cdfestimate <- try(nls(fatalities ~ logisticcdf(days, ro, to),
                            data = data,
 #                           control=list(warnOnly = TRUE),
@@ -86,8 +87,8 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
           psmo <- try(summary(pdfestimate))
           if (!inherits(psmo, "try-error"))
           {
-            fro = 0.4*fro+0.6*psmo$coefficients[1,1];
-            fto = 0.4*fto+0.6*psmo$coefficients[2,1];
+            fro = 0.50*fro+0.50*psmo$coefficients[1,1];
+            fto = 0.90*fto+0.10*psmo$coefficients[2,1];
             if (fto < 0.5*to)
             {
               fto <- to;
@@ -100,11 +101,11 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
             if (data$fatalities[lastObs] > 0.5) 
             {
               nleft <- 1.0 - nleft;
-              adjust <- (0.01 + nleft)/(0.01 + pLeft);
+              adjust <- (0.1 + nleft)/(0.1 + pLeft);
             }
             else
             {
-              adjust <- (0.01 + pLeft)/(0.01 + nleft);
+              adjust <- (0.1 + pLeft)/(0.1 + nleft);
             }
             if (adjust > 1.2)
             {
@@ -117,7 +118,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
             accAdjust <- accAdjust*adjust;
             data$fatalities <- adjust*data$fatalities;
             data$newfatalities <- adjust*data$newfatalities;
-#            cat(sprintf("(%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",pLeft,nleft,accAdjust,fro,fto),"\n")
+#            cat(sprintf("%8.5f : (%5.3f,%5.3f) Adjust= %5.3f, ro= %8.3f to=%8.3f",abs((adjusto - accAdjust)/accAdjust),pLeft,nleft,accAdjust,fro,fto),"\n")
           }
         }
       }
