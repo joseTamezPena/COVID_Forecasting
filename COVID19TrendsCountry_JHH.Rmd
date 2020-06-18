@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "6/13/2020"
+date: "6/17/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -78,6 +78,9 @@ I am also providing optimistic models. I´m assuming that the # of fatalities ar
 
 
 =====================================================================================  
+
+6/17/2020 Update:  
+Changed intial fit conditions and fit stop criteria.
 
 5/24/2020 Update:  
 
@@ -250,7 +253,7 @@ source('./logfunctions.r')
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 2.5, fig.width= 7.0}
 
 par(op)
-cn = 5
+cn = 7
 par(mfrow=c(1,2),cex=0.35,mar=c(6,4,4,5))
 for (cn in c(1:length(totaldeaths)))
 {
@@ -274,11 +277,20 @@ for (cn in c(1:length(totaldeaths)))
 
   datasetone <- as.data.frame(cbind(days=c(1:lastobs),fatalities = datsetone,newfatalities = datsetchange))
   filteredNewFatalities <-  runmed(datasetone$newfatalities,5)
+  filteredNewFatalities <- supsmu(c(1:lastobs),filteredNewFatalities)$y
+
   
 
   
 #  lastobs <- nrow(datasetone) - 1;
-  numdays <- min(lastobs,which.max(filteredNewFatalities)+14)
+  peakday <- which.max(filteredNewFatalities);
+  if (datsetone[lastobs] < 0.025)
+  {
+    peakday <- lastobs;
+  }
+  cat(lastobs,":",peakday,":",filteredNewFatalities[peakday],"\n");
+
+  numdays <- min(lastobs,peakday+daysWindow+7)
   if (numdays < (lastobs-7))
   {
 #    numdays <- which.max(filteredNewFatalities)
@@ -295,7 +307,7 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,(numdays - daysWindow))
   daysrange <- c(startday:(lastobs))
   
-  cdffitglobal <- logisitcfit(datasetone[1:numdays,],-0.075,numdays,5)
+  cdffitglobal <- logisitcfit(datasetone[1:numdays,],-0.075,peakday,5)
   lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$defecitRatio,lty=2,col="blue")
   cdffit <- logisitcfit(datasetone,
                         cdffitglobal$ro,
@@ -384,12 +396,12 @@ for (cn in c(1:length(totaldeaths)))
     peakloc <- dmax
     daystopeak <- cdffit$to-lastobs;
     daystopeakrange <- torange-lastobs;
-    if (daystopeak <= 0)
-    {
-      dmax <- min(which.max(datsetchange),cdffit$to)
+#    if (daystopeak <= 0)
+#    {
+#      dmax <- min(which.max(datsetchange),cdffit$to)
 #      daystopeak <- min(which.max(datsetchange),cdffit$to)-lastobs;
-      daystopeak <- min(cdffit$to,which.max(datasetone$newfatalities))-lastobs;
-    }
+#      daystopeak <- min(cdffit$to,which.max(datasetone$newfatalities))-lastobs;
+#    }
 
     peakdate <- thedates[lastobs] + as.integer(daystopeak+0.5)
     text(dmax + 10,0.95,
@@ -401,13 +413,14 @@ for (cn in c(1:length(totaldeaths)))
     abline(v=dmax,col="red",lty=2)
 
         
-    expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*
-      logisticcdf(10000,cdffit$ro,cdffit$to)/cdffit$defecitRatio;
+    totexpfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"];
+    expfat <- totexpfat*
+      logisticcdf(lastobs+60,cdffit$ro,cdffit$to)/cdffit$defecitRatio;
     text(90,0.75,
          paste("Current Deaths:", sprintf("%3.0f",max(time_covid19Country[names(totaldeaths[countryNumber]),]))),
          cex=0.8)
     text(90,0.7,
-         paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
+         paste("Estimated Deaths in 60 days:", sprintf("%3.0f from %5.0f Total Expected",expfat,totexpfat)),
          cex=0.8)
     
     expfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)
@@ -473,6 +486,7 @@ for (cn in c(1:length(totaldeaths)))
     axis(1,at=c(7*(0:(length(athedates)-1)),lastobs,peakloc),labels=c(athedates,thedates[lastobs],peakdate),las=2,cex.axis=0.75)
 
     thepeakdates <- c(thedates[lastobs],thedates[lastobs])
+    endDay = 2
     for (endDay in c(2,3,4,5,6,7,9,12,14,16,18,21,23,25,28))
     {
       if (daystopeak <= 0 ) 
@@ -488,12 +502,12 @@ for (cn in c(1:length(totaldeaths)))
       {
         startday <- max(1,ndays - daysWindow)
         tdaysrange <- as.integer(c(startday:ndays))
-        cdffit <- logisitcfit(datasetone,-0.1,ndays,5,daysrange = tdaysrange)  
-        if (!inherits(cdffit, "try-error"))
+        cdffit3 <- logisitcfit(datasetone,-0.075,ndays,5,daysrange = tdaysrange)  
+        if (!inherits(cdffit3, "try-error"))
         {
-          newcases <- logisticpdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$defecitRatio;
+          newcases <- logisticpdf(c(1:180),cdffit3$ro,cdffit3$to)/cdffit3$defecitRatio;
           dayloc <- c(dayloc,ndays)
-          maxdayloc <- c(maxdayloc,cdffit$to)
+          maxdayloc <- c(maxdayloc,cdffit3$to)
           maxloc <- c(maxloc,10*max(newcases))
           if ((endDay %% 7) == 0) 
           {

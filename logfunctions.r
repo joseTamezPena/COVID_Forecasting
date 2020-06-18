@@ -45,7 +45,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   data$newfatalities <- adjini*data$newfatalities;
 #  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
-  while ((abs((adjusto - accAdjust)/accAdjust) > 0.025) && (abs(log(accAdjust)) <= abs(log(gratio))))
+  while ((abs((adjusto - accAdjust)/accAdjust) >= 0.03) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
     loops <- loops + 1;
     pLeft <- 1.0-data$fatalities[lastObs];
@@ -101,11 +101,11 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
             if (data$fatalities[lastObs] > 0.5) 
             {
               nleft <- 1.0 - nleft;
-              adjust <- (0.1 + nleft)/(0.1 + pLeft);
+              adjust <- (0.01 + nleft)/(0.01 + pLeft);
             }
             else
             {
-              adjust <- (0.1 + pLeft)/(0.1 + nleft);
+              adjust <- (0.01 + pLeft)/(0.01 + nleft);
             }
             if (adjust > 1.2)
             {
@@ -125,7 +125,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
     }
     if (loops > 100)
     {
-      adjusto <- adjust
+      adjusto <- accAdjust
     }
     if (loops == 1)
     {
@@ -155,7 +155,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   return (models);
 }
 
-bootstraplogisitcfit <- function(data,inifit,ratiorange=1.5,n=500,daysrange=c(1:nrow(data)))
+bootstraplogisitcfit <- function(data,inifit,ratiorange=1.5,n=100,daysrange=c(1:nrow(data)))
 {
   toestimations <- numeric(n);
   roestimations <- numeric(n);
