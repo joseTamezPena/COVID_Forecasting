@@ -185,6 +185,7 @@ rownames(covid19_datapopulation) <- paste(covid19_datapopulation$Country,":",sep
 
 
 totalPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Population_2020,",",""))
+names(totalPoulation) <- covid19_datapopulation$Country
 totalUrbanPoulation <- as.numeric(str_replace_all(covid19_datapopulation$Urban_pop_pct,"\\%",""))/100.0
 totalUrbanPoulation[is.na(totalUrbanPoulation)] <- 1.0;
 totalUrbanPoulation <- totalPoulation*totalUrbanPoulation
@@ -208,6 +209,8 @@ par(mar=c(8,4,4,4),pty="m")
 #barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,horiz = TRUE,main="Expected Fatalities",xlab="MIllions")
 barplot(expfatalities[1:30],las=2,cex.names =0.70,cex.axis = 0.60,main="Expected Fatalities",ylab="Millions")
 par(op)
+
+rownames(covid19_datapopulation) <- covid19_datapopulation$Country
 
 ```
 
@@ -252,14 +255,21 @@ source('./logfunctions.r')
 
 ```{r, echo = FALSE, results = "hide", dpi=300, fig.height= 2.5, fig.width= 7.0}
 
+
 par(op)
 cn = 7
 par(mfrow=c(1,2),cex=0.35,mar=c(6,4,4,5))
+estimated60 <- numeric(length(totaldeaths))
+peakDates <- estimated60;
+class(peakDates) <- "Date"
+mainNames <- character(length(totaldeaths));
+
 for (cn in c(1:length(totaldeaths)))
 {
   thepeakdates <- character(6);
   countryNumber <- cn
   mainName <- names(totaldeaths[countryNumber])
+  mainNames[cn] <- mainName;
   
   datsetone <- as.numeric(time_covid19CountryPerc[names(totaldeaths[countryNumber]),])
   thedates <- colnames(time_covid19CountryPerc)[datsetone > 0.0]
@@ -403,7 +413,7 @@ for (cn in c(1:length(totaldeaths)))
 #      daystopeak <- min(cdffit$to,which.max(datasetone$newfatalities))-lastobs;
 #    }
 
-    peakdate <- thedates[lastobs] + as.integer(daystopeak+0.5)
+    peakdate <- thedates[lastobs] + as.integer(daystopeak+0.5);
     text(dmax + 10,0.95,
          paste("Days to peak:", sprintf("%4.1f",daystopeakrange[2])),
          cex=0.8)
@@ -416,6 +426,8 @@ for (cn in c(1:length(totaldeaths)))
     totexpfat <- covid19_datapopulation[names(totaldeaths[countryNumber]),"ExpectedFatalities"];
     expfat <- totexpfat*
       logisticcdf(lastobs+60,cdffit$ro,cdffit$to)/cdffit$defecitRatio;
+    estimated60[cn] <- expfat;
+    peakDates[cn] <- thedates[lastobs]+as.integer(daystopeakrange[2]+0.5);
     text(90,0.75,
          paste("Current Deaths:", sprintf("%3.0f",max(time_covid19Country[names(totaldeaths[countryNumber]),]))),
          cex=0.8)
@@ -553,6 +565,23 @@ for (cn in c(1:length(totaldeaths)))
   mtext("New Fatalities as Fraction of Total Expected", cex=0.35,side=4, line=3, cex.lab=0.2, col="black",las=3)
 
 }
+
+```
+
+```{r echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
+par(mfrow=c(1,1),cex=0.65,mar=c(6,4,4,5))
+lastdate <- thedates[length(thedates)];
+estimated100000 <- 100000*estimated60/totalPoulation[mainNames];
+colors <- character(length(estimated100000));
+colors[peakDates >= lastdate] <- "red";
+colors[peakDates < lastdate] <- "blue";
+plot(peakDates,estimated100000,pch=NA,xlab="Peak Date",ylab="Fatalities per 100,000 Population",main="Fatalities vs. Peak Date",xlim=c(thedates[1],lastdate+180),sub=paste("The estimated fatalities are @60 days form today. The farther away the peak from",as.character(lastdate),", the less reliable are the estimates"))
+text(peakDates,estimated100000,mainNames,col=colors)
+
+legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdate)),paste("Estimated Peak After ",as.character(lastdate))),
+         col = c("blue","red"),
+         pch = c(1,1),
+         cex=0.75)
 
 ```
 

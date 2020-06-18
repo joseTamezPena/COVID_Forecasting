@@ -232,7 +232,7 @@ for (cn in c(1:length(totaldeaths)))
   filterednewfatalities <- supsmu(c(1:lastobs),filterednewfatalities)$y
 
   peakday <- which.max(filterednewfatalities);
-  if (datsetone[lastobs] < 0.075)
+  if (datsetone[lastobs] < 0.025)
   {
     peakday <- lastobs;
   }
