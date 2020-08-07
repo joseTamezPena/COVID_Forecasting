@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "6/17/2020"
+date: "8/4/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -19,7 +19,7 @@ library(stringr)
 ```
 
 
-## Forcasting COVID-19 Deaths on selected US locations
+## Forecasting COVID-19 Deaths on selected US locations
 
 A simple model for the estimation of the maximum percentage of deaths due to COVID-19 in sevarl US Locations with more than 250 total deaths
 
@@ -180,7 +180,7 @@ for (ctr in names(totaldeaths[1:30]))
 }
 
 totaldeaths  <- totaldeaths[!is.na(totaldeaths)]
-totaldeaths  <- totaldeaths[totaldeaths > 150]
+totaldeaths  <- totaldeaths[totaldeaths > 250]
 
 ```
 
@@ -336,13 +336,14 @@ for (cn in c(1:length(totaldeaths)))
     abline(v=dmax,col="red",lty=2)
 
         
-    expfat <- covid19_datapopulation[names(totaldeaths[usNumber]),"ExpectedFatalities"]*
-      logisticcdf(10000,cdffit$ro,cdffit$to)/cdffit$adjust;
+    totexpfat <- covid19_datapopulation[names(totaldeaths[usNumber]),"ExpectedFatalities"]
+    expfat <- totexpfat*
+      logisticcdf(lastobs+60,cdffit$ro,cdffit$to)/cdffit$adjust;
     text(90,0.55,
          paste("Current Deaths:", sprintf("%3.0f",max(time_covid19US[names(totaldeaths[usNumber]),]))),
          cex=0.8)
     text(90,0.5,
-         paste("Total Expected Deaths:", sprintf("%3.0f",expfat)),
+         paste("Estimated Total Deaths in 60 days:", sprintf("%3.0f from %5.0f Total Expected",expfat,totexpfat)),
          cex=0.8)
     
     expfat <- covid19_datapopulation[names(totaldeaths[usNumber]),"ExpectedFatalities"]*max(predictedTotalNewCases)

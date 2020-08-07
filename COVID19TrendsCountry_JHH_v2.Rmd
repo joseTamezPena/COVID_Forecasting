@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "7/6/2020"
+date: "8/5/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -19,7 +19,7 @@ library(stringr)
 ```
 
 
-## Forcasting COVID-19 Deaths
+## Forecasting COVID-19 Deaths
 
 A simple model for the estimation of the maximum percentage of deaths due to COVID-19 
 
@@ -315,21 +315,39 @@ for (cn in c(1:length(totaldeaths)))
   }
   plot(datasetone$newfatalities,main=paste("New Deaths:",mainName),xlab="Days since deaths>0",ylab="Fraction of expected deaths")
 
-  startday <- max(1,(numdays - daysWindow))
-  daysrange <- c(startday:(lastobs))
   
   cdffitglobal <- logisitcfit(datasetone[1:numdays,],-0.075,peakday,5)
   lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$defecitRatio,lty=2,col="blue")
+  too <- cdffitglobal$to
+  startday <- max(1,(numdays - daysWindow))
+  if (numdays < lastobs)
+  {
+    startday <- max(1,numdays)
+    minday <- startday + which.min(filteredNewFatalities[startday:(lastobs)]);
+    print(minday)
+    if (minday < (lastobs-daysWindow))
+    {
+      if (0.5*filteredNewFatalities[lastobs] > filteredNewFatalities[minday])
+      {
+        startday <- minday - daysWindow
+        too <- 0.25*startday+0.750*lastobs
+        print(too)
+      }
+    }
+  }
+  daysrange <- c(startday:(lastobs))
+  print(daysrange)
   cdffit <- logisitcfit(datasetone,
                         cdffitglobal$ro,
-                        cdffitglobal$to,
+                        too,
                         2*cdffitglobal$defecitRatio,
                         adjini=cdffitglobal$defecitRatio,
                         daysrange=daysrange)
  lines(cdffit$filterpdf,lty=1,col="red")
  if (inherits(cdffit, "try-error"))
   {
-    startday <- max(1,(numdays - daysWindow -7))
+    cat("Error\n")
+    startday <- max(1,(numdays - 2*daysWindow -7))
     daysrange <- c(startday:(lastobs))
     cdffit <- logisitcfit(datasetone,cdffitglobal$ro,cdffitglobal$to,2*cdffitglobal$defecitRatio,adjini=cdffitglobal$defecitRatio,daysrange=daysrange)
   }
@@ -339,6 +357,8 @@ for (cn in c(1:length(totaldeaths)))
   cdffitn <- cdffit;
   if (daystopeak <= 0)
   {
+#    pstartday <- max(1,(lastobs - 2*daysWindow))
+#    plastday <- c(startday:(lastobs))
     pstartday <- as.integer(max(1,cdffit$to - 1.5*daysWindow))
     plastday <- min(c(lastobs,as.integer(cdffit$to)+7))
     pdaysrange <- c(pstartday:plastday)
@@ -394,7 +414,7 @@ for (cn in c(1:length(totaldeaths)))
     maxloc <- numeric()
     predictedTotalCases <- logisticcdf(c(1:180),cdffit$ro,cdffit$to)/cdffit$defecitRatio;
     ymax <- max(1,max(predictedTotalCases))
-    names(predictedTotalCases) <- thedates
+    names(predictedTotalCases) <- thedates[1:180]
 
     plot(predictedTotalCases,
          ylim=c(0,ymax),
@@ -587,6 +607,16 @@ for (cn in c(1:length(totaldeaths)))
 ```
 
 ```{r echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+  datsetone <- as.numeric(time_covid19CountryPerc[names(totaldeaths[1]),])
+  thedates <- colnames(time_covid19CountryPerc)[datsetone > 0.0]
+  thedates <- str_replace(thedates,"X","")
+  thedates <- str_replace_all(thedates,"\\.","/")
+  thedates <- as.Date(thedates,"%m/%d/%Y")
+  thedates <- as.Date(str_replace(thedates,"0020-","2020-"))
+
+
+
 par(mfrow=c(1,1),cex=0.65,mar=c(6,4,4,5))
 lastdate <- thedates[length(thedates)];
 estimated100000 <- 100000*estimated60/totalPoulation[mainNames];
@@ -604,14 +634,14 @@ legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdat
 ```
 
 
-```{r echo = FALSE, results = "hide", dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r echo = FALSE, results = "hide", dpi=300, fig.height= 3.5, fig.width= 7.0}
 par(mfrow=c(1,2),cex=0.65,mar=c(6,5,4,5))
 lastdate <- thedates[length(thedates)];
 estimatedMIllon <- 1000000*estimatedPeak/totalPoulation[mainNames];
 colors <- character(length(estimatedMIllon));
 colors[peakDates >= lastdate] <- "red";
 colors[peakDates < lastdate] <- "blue";
-plot(peakDates,estimatedMIllon,pch=NA,xlab="Peak Date",ylab="Fatalities per 1,000,000 Population",main="At Peak Fatalities vs. Peak Date",xlim=c(thedates[1],lastdate+60),ylim=c(0,400),sub=paste("The estimated fatalities at peak date"))
+plot(peakDates,estimatedMIllon,pch=NA,xlab="Peak Date",ylab="Fatalities per 1,000,000 Population",main="At Peak Fatalities vs. Peak Date",xlim=c(thedates[1],lastdate+60),ylim=c(0,500),sub=paste("The estimated fatalities at peak date"))
 text(peakDates,estimatedMIllon,mainNames,col=colors)
 
 legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdate)),paste("Estimated Peak After ",as.character(lastdate))),
@@ -621,6 +651,6 @@ legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdat
 
 estimatedMIllon <- estimatedMIllon[peakDates <= lastdate];
 estimatedMIllon <- estimatedMIllon[order(estimatedMIllon)];
-barplot(estimatedMIllon,horiz=TRUE,xlim=c(0,400),main="Fatalities per Million at Peak Date",las=2,cex.axis = 1.0,cex.names = 0.75)
+barplot(estimatedMIllon,horiz=TRUE,xlim=c(0,500),main="Fatalities per Million at Peak Date",las=2,cex.axis = 1.0,cex.names = 0.5)
 
 ```
