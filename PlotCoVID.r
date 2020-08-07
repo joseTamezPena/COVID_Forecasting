@@ -30,7 +30,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     
     mxchange <- 0.8*max(datsetchange);
     lastday <- as.integer(mean(c(1:lastobs)[(datsetchange > mxchange)]) + 0.5) - 3;
-    peadDate <- lastday
+    peakDate <- 0.5*(lastday+ which.max(datsetchange))
     print(c(lastobs,lastday))
     if (lastday < mindaytoinclude)
     {
@@ -41,7 +41,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
   #    print(lastday)
     
     daysrange <- c(1:lastday)
-    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,peadDate,1.5,daysrange=daysrange)
+    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,peakDate,1.5,daysrange=daysrange)
 #    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
 #    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
     
@@ -49,6 +49,10 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     cat(cdffitglobal$adjust,"\n")
     adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
     cat(adjsini,"\n")
+    if (peakDate < (lastday-17))
+    {
+      daysrange <- c((peakDate-17):lastday)
+    }
 #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
     cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
     #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
