@@ -24,14 +24,6 @@ logisticpdf <- function(days,ro,to,rp=NULL)
     w = sqrt(2.0*(1.0-cdf))
     pdf[postto] <- w*pdf[postto] + (1.0-w)*pdf2
   }
-#  dt <- 1.0e-1;
-#  pdf <- 0.5*(logisticcdf(days+dt,ro,to,rp) - logisticcdf(days-dt,ro,to,rp))/dt
-#  dt <- 1.0e-3;
-#  pdf <- pdf+0.5*(logisticcdf(days+dt,ro,to,rp) - logisticcdf(days-dt,ro,to,rp))/dt
-#  dt <- 1.0e-9;
-#  pdf <- pdf+0.5*(logisticcdf(days+dt,ro,to,rp) - logisticcdf(days-dt,ro,to,rp))/dt
-#  dt <- 1.0e-12;
-#  pdf <- (pdf+0.5*(logisticcdf(days+dt,ro,to,rp) - logisticcdf(days-dt,ro,to,rp))/dt)/4.0
   return(pdf);
 }
 

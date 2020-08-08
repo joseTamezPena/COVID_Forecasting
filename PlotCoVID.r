@@ -16,6 +16,9 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
          cex.lab=0.65
     );
     
+    sdatsetchange <- runmed(datsetchange,5)
+
+    
     mindaytoincludeID <- which.max(datsetchange);
         
     startDate <- as.Date(startDate)
@@ -30,7 +33,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     
     mxchange <- 0.8*max(datsetchange);
     lastday <- as.integer(mean(c(1:lastobs)[(datsetchange > mxchange)]) + 0.5) - 3;
-    peakDate <- 0.5*(lastday+ which.max(datsetchange))
+    peakDate <- 0.25*lastday + 0.75*which.max(sdatsetchange)
     print(c(lastobs,lastday))
     if (lastday < mindaytoinclude)
     {
