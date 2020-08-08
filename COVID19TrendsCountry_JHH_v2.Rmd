@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "8/5/2020"
+date: "8/6/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -78,6 +78,9 @@ I am also providing optimistic models. I´m assuming that the # of fatalities ar
 
 
 =====================================================================================  
+8/7/2020 Update:  
+The modeling function now has two logistics One for uptrend and the second for down trending.
+The two functions are blended for the final fitting.
 
 6/17/2020 Update:  
 Changed intial fit conditions and fit stop criteria.
@@ -322,18 +325,7 @@ for (cn in c(1:length(totaldeaths)))
   startday <- max(1,(numdays - daysWindow))
   if (numdays < lastobs)
   {
-    startday <- max(1,numdays)
-    minday <- startday + which.min(filteredNewFatalities[startday:(lastobs)]);
-    print(minday)
-    if (minday < (lastobs-daysWindow))
-    {
-      if (0.5*filteredNewFatalities[lastobs] > filteredNewFatalities[minday])
-      {
-        startday <- minday - daysWindow
-        too <- 0.25*startday+0.750*lastobs
-        print(too)
-      }
-    }
+    startday <- max(1,peakday)
   }
   daysrange <- c(startday:(lastobs))
   print(daysrange)
@@ -634,7 +626,7 @@ legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdat
 ```
 
 
-```{r echo = FALSE, results = "hide", dpi=300, fig.height= 3.5, fig.width= 7.0}
+```{r echo = FALSE, results = "hide", dpi=300, fig.height= 4.0, fig.width= 7.0}
 par(mfrow=c(1,2),cex=0.65,mar=c(6,5,4,5))
 lastdate <- thedates[length(thedates)];
 estimatedMIllon <- 1000000*estimatedPeak/totalPoulation[mainNames];
@@ -651,6 +643,6 @@ legend("topright",legend = c(paste("Estimated Peak Before ",as.character(lastdat
 
 estimatedMIllon <- estimatedMIllon[peakDates <= lastdate];
 estimatedMIllon <- estimatedMIllon[order(estimatedMIllon)];
-barplot(estimatedMIllon,horiz=TRUE,xlim=c(0,500),main="Fatalities per Million at Peak Date",las=2,cex.axis = 1.0,cex.names = 0.5)
+barplot(estimatedMIllon,horiz=TRUE,xlim=c(0,500),main="Fatalities per Million at Peak Date",las=2,cex.axis = 1.0,cex.names = 0.45)
 
 ```
