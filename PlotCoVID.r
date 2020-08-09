@@ -52,9 +52,10 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     cat(cdffitglobal$adjust,"\n")
     adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
     cat(adjsini,"\n")
-    if (peakDate < (lastday-17))
+    if (peakDate < (lastday-24))
     {
-      daysrange <- c((peakDate-17):lastday)
+      daysrange <- c((peakDate-7):lastday)
+      print(daysrange)
     }
 #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
     cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
