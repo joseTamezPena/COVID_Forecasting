@@ -1,12 +1,16 @@
 logisticcdf <- function(days,ro,to,rp=NULL) 
 { 
-  if (is.null(rp)) rp = 0.5*ro
+  if (is.null(rp)) 
+  {
+    rp = 0.5*ro
+  }
   cdf <- 1.0/(1.0+exp(ro*(days-to)));
-  postto <- days > to
+  postto <- days > (to-14)
   if (any(postto))
   {
     cdfp <- 1.0/(1.0+exp(rp*(days[postto]-to)));
-    w = sqrt(2.0*(1.0-cdf[postto]))
+    cdf3 <- 1.0/(1.0+exp(1.0*ro*(days[postto]-(to-14))));
+    w = sqrt(2.0*(1.0-cdf3))
     cdf[postto] <- w*cdf[postto] + (1.0-w)*cdfp
   }
   return(cdf);
@@ -14,14 +18,17 @@ logisticcdf <- function(days,ro,to,rp=NULL)
 
 logisticpdf <- function(days,ro,to,rp=NULL) 
 { 
-  if (is.null(rp)) rp = 0.5*ro
+  if (is.null(rp))
+  {
+    rp = 0.5*ro
+  }
   pdf <- -ro*exp(ro*(days-to))/((1.0+exp(ro*(days-to)))^2); 
-  postto <- days > to
+  postto <- days > (to-14)
   if (any(postto))
   {
-    cdf <- 1.0/(1.0+exp(ro*(days[postto]-to)));
+    cdf3 <- 1.0/(1.0+exp(1.0*ro*(days[postto]-(to-14))));
     pdf2 <- -rp*exp(rp*(days[postto]-to))/((1.0+exp(rp*(days[postto]-to)))^2); 
-    w = sqrt(2.0*(1.0-cdf))
+    w = sqrt(2.0*(1.0-cdf3))
     pdf[postto] <- w*pdf[postto] + (1.0-w)*pdf2
   }
   return(pdf);
