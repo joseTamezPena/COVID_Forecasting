@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 US Peak Forecasting"
 author: "Jose Tamez"
-date: "8/7/2020"
+date: "8/8/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -246,7 +246,19 @@ for (cn in c(1:length(totaldeaths)))
   cdffitglobal <- logisitcfit(datasetone,-0.075,peakday,5)
   lines(cdffitglobal$filterpdf,lty=1,col="red")
   lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$adjust,lty=2,col="blue")
-  cdffit <- logisitcfit(datasetone,cdffitglobal$ro,cdffitglobal$to,5,adjini=cdffitglobal$adjust,daysrange=daysrange)
+    startday <- max(1,(numdays - daysWindow))
+  if (numdays < lastobs)
+  {
+    startday <- max(1,which.max(filterednewfatalities)-7)
+  }
+  daysrange <- c(startday:(lastobs))
+#  print(daysrange)
+
+  cdffit <- logisitcfit(datasetone,cdffitglobal$ro,
+                        peakday,
+                        2*cdffitglobal$defecitRatio,
+                        adjini=cdffitglobal$adjust,
+                        daysrange=daysrange)
 #  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=5,col="green")
 #  daystopeak <- cdffit$to-lastobs
 #  if (daystopeak <= -5)
