@@ -40,12 +40,17 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
 #      print(c(lastobs,lastday,lastobs-lastday))
       lastday <- mindaytoinclude
     }
-    print(c(lastobs,lastday,lastobs-lastday))
+    print(c(lastobs,lastday,peakDate,lastobs-lastday))
   #    print(lastday)
     
     daysrange <- c(1:lastday)
-    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,peakDate,1.5,daysrange=daysrange)
-#    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
+    print(daysrange)
+    cdffitglobalo <- logisitcfit(datasetperc[c(1:lastday),],-0.075,peakDate,5,daysrange=daysrange)
+    lines(cdffitglobalo$filterpdf*totalEsperado,lty=1,col="red",lwd=3)
+    daysrange <- c(1:min(lastday,peakDate+7))
+    print(daysrange)
+    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],-0.075,peakDate,5,daysrange=daysrange)
+    #    adjsini <- 0.5*(cdffitglobal$adjust + 1.0)
 #    cdffitglobal <- logisitcfit(datasetperc[c(1:lastday),],cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
     
     daysrange <- c((lastday - 17):lastday)
@@ -54,17 +59,18 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     cat(adjsini,"\n")
     if (peakDate < (lastday-24))
     {
+      peakDate <- which.max(cdffitglobalo$filterpdf)
       daysrange <- c((peakDate-7):lastday)
       print(daysrange)
     }
 #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)
-    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
+    cdffit <- logisitcfit(datasetperc[c(1:lastday),],cdffitglobal$ro,peakDate,2.50*adjsini,adjini=adjsini,daysrange=daysrange)
     #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,3,daysrange=daysrange)
     cat(cdffit$adjust,"\n")
     
-    lines(cdffitglobal$filterpdf*totalEsperado,lty=1,col="red",lwd=3)
-    lines(logisticpdf(c(1:maxplotdata),cdffitglobal$ro,cdffitglobal$to)/cdffitglobal$defecitRatio*totalEsperado,lty=5,col="blue",lwd=1)    
-    lines(logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio*totalEsperado,lty=3,col="green",lwd=3)    
+    lines(cdffitglobalo$filterpdf*totalEsperado,lty=1,col="red",lwd=3)
+    lines(logisticpdf(c(1:maxplotdata),cdffitglobal$ro,cdffitglobal$to,cdffitglobal$rpo)/cdffitglobal$defecitRatio*totalEsperado,lty=5,col="blue",lwd=1)    
+    lines(logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to,cdffit$rpo)/cdffit$defecitRatio*totalEsperado,lty=3,col="green",lwd=3)    
     
     legend("topleft",
            legend = c("Observado","Suavizado","Global Estimation","Last 17 Days"),
@@ -74,7 +80,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
            lwd = c(NA,3,1,3),
            cex=0.5)
     
-        hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio
+        hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to,cdffit$rpo)/cdffit$defecitRatio
 #    hostCDFIT <- logisticcdf(c(1:maxplotdata),cdffit$ro,cdffit$to)
     plot(hostCDFIT,
          ylim=c(0,1),
@@ -89,8 +95,9 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
          cex.lab=0.65
     )
     lines(dataPerc,lty=1,col="gray",lwd=3)
-    lines(cdffitglobal$filterCDF,lty=1,col="red")
-    pdfpredictions <- logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to)/cdffit$defecitRatio;
+    lines(cdffitglobalo$filterCDF,lty=1,col="red")
+    pdfpredictions <- logisticpdf(c(1:maxplotdata),cdffit$ro,cdffit$to,cdffit$rpo)/cdffit$defecitRatio;
+    print(c(cdffit$ro,cdffit$to,cdffit$rpo))
     lines(30*pdfpredictions,lty=2,col="blue")
     atpeak <- as.integer(cdffit$to+0.5)
     estimadoActual <- totalEsperado*sum(pdfpredictions[1:lastobs]);
@@ -119,7 +126,8 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
          pos=4,
          cex=0.5)
     
-    bootest <- bootstraplogisitcfit(datasetperc,cdffit,n=500,daysrange=daysrange)
+    bootest <- bootstraplogisitcfit(datasetperc,cdffit,n=250,daysrange=daysrange)
+#    bootest <- bootstraplogisitcfit(datasetperc,cdffit,n=5,daysrange=daysrange)
     torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
     daystopeakrange <- startDate + as.integer(torange+0.5);
     text(1,0.55,
