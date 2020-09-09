@@ -60,7 +60,7 @@ plotCovid <- function(data,feature,mainName,totalEsperado,startDate,currentdate)
     if (peakDate < (lastday-24))
     {
       peakDate <- which.max(cdffitglobalo$filterpdf)
-      daysrange <- c((peakDate-7):lastday)
+      daysrange <- c((peakDate-21):lastday)
       print(daysrange)
     }
 #    cdffit <- logisitcfit(datasetperc,cdffitglobal$ro,cdffitglobal$to,1.2*cdffitglobal$adjust,adjini=cdffitglobal$adjust,daysrange=daysrange)

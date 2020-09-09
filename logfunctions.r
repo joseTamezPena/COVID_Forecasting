@@ -70,7 +70,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
 
   data$fatalities <- adjini*data$fatalities;
   data$newfatalities <- adjini*data$newfatalities;
-#  cat(adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
+#  cat("Start:",adjusto,":",adjust,":",accAdjust,":",gratio,":",abs(log(accAdjust)),":",log(gratio),"\n")
   
   while ((abs((adjusto - accAdjust)/accAdjust) >= 0.03) && (abs(log(accAdjust)) <= abs(log(gratio))))
   {
@@ -203,7 +203,7 @@ logisitcfit <- function(data,ro,to,gratio=2,adjini=1,lowf=1/4,daysrange=c(1:nrow
   return (models);
 }
 
-bootstraplogisitcfit <- function(data,inifit,ratiorange=1.5,n=100,daysrange=c(1:nrow(data)))
+bootstraplogisitcfit <- function(data,inifit,ratiorange=1.75,n=200,daysrange=c(1:nrow(data)))
 {
   toestimations <- numeric(n);
   roestimations <- numeric(n);
@@ -227,7 +227,7 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=1.5,n=100,daysrange=c(1:
     ndata$newfatalities <- maxgain*ndata$newfatalities;
     iniadjs <- inifit$adjust;
 #    iniadjs <- 1.0;
-    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.2*inifit$defecitRatio,iniadjs,daysrange=daysrange))
+    nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.5*inifit$defecitRatio,iniadjs,daysrange=daysrange))
     if (!inherits(nfit, "try-error"))
     {
       toestimations[bsamples] <- nfit$to;
