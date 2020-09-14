@@ -230,10 +230,13 @@ bootstraplogisitcfit <- function(data,inifit,ratiorange=1.75,n=200,daysrange=c(1
     nfit <- try(logisitcfit(ndata,inifit$ro,inifit$to,1.5*inifit$defecitRatio,iniadjs,daysrange=daysrange))
     if (!inherits(nfit, "try-error"))
     {
-      toestimations[bsamples] <- nfit$to;
-      roestimations[bsamples] <- nfit$ro;
-      rpoestimations[bsamples] <- nfit$rpo;
-      defratios[bsamples] <- nfit$defecitRatio*maxgain;
+      if ((nfit$ro < 0) && (nfit$to>0) && (nfit$rpo < 0) )
+      {
+        toestimations[bsamples] <- nfit$to;
+        roestimations[bsamples] <- nfit$ro;
+        rpoestimations[bsamples] <- nfit$rpo;
+        defratios[bsamples] <- nfit$defecitRatio*maxgain;
+      }
     }
   }
   result <- list(to=toestimations,ro=roestimations,rpo=rpoestimations,defratios=defratios,gains=optGain)
