@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Peak Forecasting"
 author: "Jose Tamez"
-date: "8/15/2020"
+date: "9/12/2020"
 output: 
   html_document: 
     fig_caption: yes
@@ -261,7 +261,7 @@ source('./logfunctions.r')
 names(totaldeaths)
 par(op)
 cn = which(names(totaldeaths) == "Austria")
-
+cn = 1 
 
 
 par(mfrow=c(1,2),cex=0.35,mar=c(6,4,4,5))
@@ -272,6 +272,7 @@ class(peakDates) <- "Date"
 mainNames <- character(length(totaldeaths));
 
 for (cn in c(1:length(totaldeaths)))
+#for (cn in c(1:10))
 {
   thepeakdates <- character(6);
   countryNumber <- cn
@@ -305,9 +306,9 @@ for (cn in c(1:length(totaldeaths)))
   {
     peakday <- lastobs;
   }
-  mindef <- which.min(filteredNewFatalities[peakday:lastobs])+peakday-1;
+  mindef <- which.min(filteredNewFatalities[peakday:(lastobs-daysWindow-7)])+peakday-1;
   
-  cat(lastobs,":",peakday,":",filteredNewFatalities[peakday],mindef,filteredNewFatalities[mindef],"\n");
+  cat(lastobs,":",peakday,":",filteredNewFatalities[peakday],"Min day:",mindef,filteredNewFatalities[mindef],"\n");
   
 
   numdays <- min(lastobs,peakday+daysWindow+7)
@@ -333,32 +334,39 @@ for (cn in c(1:length(totaldeaths)))
   lines(logisticpdf(c(1:length(datsetone)),cdffitglobal$ro,peakday,cdffitglobal$rpo)/cdffitglobal$defecitRatio,lty=2,col="blue")
   too <- cdffitglobal$to
   startday <- max(1,(numdays - daysWindow))
+  adjini = 1.25*cdffitglobal$defecitRatio;
   if (numdays < lastobs)
   {
-    startday <- max(1,peakday-daysWindow)
-    too <- 0.25*cdffitglobal$to + 0.75*peakday
-#    if (filteredNewFatalities[mindef] < 0.75*filteredNewFatalities[lastobs])
-#    {
-#      too <- 0.5*(mindef + cdffitglobal$to)
-#      startday <- max(1,as.integer((mindef + startday)/2) )
-#      print(c(too,mindef,startday))
-#    }
+    startday <- max(1,peakday-3*daysWindow)
+#    startday <- 1
+      too <- 0.5*cdffitglobal$to + 0.5*peakday
+#     too <- 0.75*peakday
+    if ((filteredNewFatalities[mindef] < 0.80*filteredNewFatalities[lastobs-daysWindow]) && (filteredNewFatalities[lastobs] > 5.0e-4))
+    {
+     adjini = 0.5*cdffitglobal$defecitRatio;
+      too <- 0.5*(mindef + lastobs)
+      startday <- max(startday,mindef)
+      print(c(too,mindef,startday))
+    }
   }
-  daysrange <- c(startday:(lastobs))
-  print(daysrange)
+  daysrange <- c(startday:lastobs)
+  cat(lastobs,":",too,": Start day:",startday,"Last Day:",lastobs,"\n");
+
   cdffit <- logisitcfit(datasetone,
                         cdffitglobal$ro,
                         too,
-                        2*cdffitglobal$defecitRatio,
-                        adjini=cdffitglobal$defecitRatio,
+                        4.0*adjini,
+                        adjini = adjini,
                         daysrange=daysrange)
  lines(cdffit$filterpdf,lty=1,col="red")
  if (inherits(cdffit, "try-error"))
   {
     cat("Error\n")
-    startday <- max(1,(numdays - 2*daysWindow))
-    daysrange <- c(startday:(lastobs))
-    cdffit <- logisitcfit(datasetone,cdffitglobal$ro,peakday,2*cdffitglobal$defecitRatio,adjini=2*cdffitglobal$defecitRatio,daysrange=daysrange)
+    startday <- max(1,as.integer(0.90*startday))
+    too <- 1.1*too;
+    cat(lastobs,":",too,": Start day:",startday,"Last Day:",lastobs,"\n");
+    daysrange <- c(startday:lastobs)
+    cdffit <- logisitcfit(datasetone,cdffitglobal$ro,too,5*adjini,adjini=1.1*adjini,daysrange=daysrange)
   }
 
 #  lines(logisticpdf(c(1:length(datsetone)),cdffit$ro,cdffit$to)/cdffit$adjust,lty=5,col="green")
@@ -416,10 +424,10 @@ for (cn in c(1:length(totaldeaths)))
   if (!inherits(cdffit, "try-error"))
   {
     bootest <- bootstraplogisitcfit(datasetone,cdffit,n=250,daysrange=daysrange)
-    meanto <- mean(bootest$to)
-    meanro <- mean(bootest$ro)
-    meanrpo <- mean(bootest$rpo)
-    meandr <- mean(bootest$defratios)
+    meanto <- median(bootest$to)
+    meanro <- median(bootest$ro)
+    meanrpo <- median(bootest$rpo)
+    meandr <- median(bootest$defratios)
     
     torange <- quantile(bootest$to,probs = c(0.025,0.5,0.975))
 
@@ -597,7 +605,7 @@ for (cn in c(1:length(totaldeaths)))
     points(dayloc,maxloc,col="gray")
     points(maxdayloc,rep(0,length(maxdayloc)),
            pch = 17,col=c("purple","pink",rep("purple",length(maxdayloc)-2)),
-           cex=c(2.5,2.0,2.0,1.5,1.5,rep(1,length(maxdayloc)-5)))
+           cex=c(2.5,2.0,2.0,1.5,1.5,1))
   }
   else
   {
